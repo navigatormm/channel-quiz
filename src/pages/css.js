@@ -28,6 +28,8 @@ export const CSS = BRAND_CSS + `
 .ready::before{content:"";width:8px;height:8px;border-radius:50%;background:#2F8A5B}
 .qcard form{display:grid;gap:.9rem;margin-top:1.1rem}
 .qcard .err{margin-top:.8rem}
+.consent{display:grid;grid-template-columns:22px minmax(0,1fr);gap:.7rem;align-items:start;font-size:.9rem;line-height:1.45;color:var(--ink-2);cursor:pointer}
+.consent input{width:22px;height:22px;margin:0;accent-color:var(--ink);cursor:pointer}
 /* channels: chart-art cards, like "Why choose Navigator" on the homepage */
 .chan{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;list-style:none;padding:0}
 .chan li{position:relative;isolation:isolate;overflow:hidden;border-radius:16px;background:var(--dark);color:var(--on-dark);min-height:400px;display:flex;flex-direction:column;justify-content:flex-end;padding:1.3rem 1.2rem 1.4rem;gap:.5rem;min-width:0}

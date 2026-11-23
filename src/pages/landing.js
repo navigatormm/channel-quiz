@@ -1,7 +1,7 @@
 import { CSS } from './css.js';
 import { QUESTIONS, CHANNELS } from '../quiz.js';
 import { ART } from '../content.js';
-import { esc, WHATCONVERTS } from '../lib/util.js';
+import { esc, WHATCONVERTS, CONSENT_TEXT } from '../lib/util.js';
 import { FONTS, ASSET, PRIVACY, route, siteHeader, siteFooter } from './brand.js';
 
 // One reader (a business owner or marketing manager deciding where to spend), one promise (a straight answer on
@@ -28,18 +28,18 @@ const BEST = {
 
 const FAQ = [
   ['Do I need to know anything about marketing?', 'No. Every question is about your own business: who you sell to, what you sell and where your customers come from today. If you can describe your business, you can answer them.'],
-  ['Is this really free?', 'Yes. Answer the questions, tell us where to send your result, and you\'ll see it right away. We email you a copy too.'],
+  ['Is this really free?', 'Yes. Answer the questions, tell us where to send your result and agree to hear from us by email, and you\'ll see it right away. We email you a copy too.'],
   ['How accurate is it?', 'It\'s a starting point built from your answers, not an audit. It doesn\'t look at your website, your competitors or your numbers. For that, book a free strategy call and we\'ll check the result against the real thing.'],
   ['Can I do more than one?', 'Yes, and you probably will as you grow. The quiz tells you where to start, so your first marketing dollars go where they\'re most likely to work.'],
   ['What if I\'m already running ads?', 'Take it anyway. If your result matches what you\'re doing, it\'s worth checking how well it\'s set up. If it doesn\'t match, that\'s worth a conversation.'],
-  ['What happens to my email address?', `We use it to send your result and to follow up once about it. You can unsubscribe any time. <a href="${PRIVACY}" target="_blank" rel="noopener">Read our privacy policy</a>.`],
+  ['What happens to my email address?', `We send your result to it. To get the result, you agree to receive marketing tips and offers from Navigator Multimedia by email. You can unsubscribe at any time. <a href="${PRIVACY}" target="_blank" rel="noopener">Read our privacy policy</a>.`],
 ];
 
 // Only what the browser needs: question text, hints and option labels. Weights stay on the server.
 const PUBLIC_QUESTIONS = QUESTIONS.map((q, i) => ({ id: q.id, n: i + 1, q: q.q, hint: q.hint || '', only: q.only || null, options: q.options.map(o => ({ id: o.id, label: o.label })) }));
 
 export function landingPage({ error = '', values = {}, answers = null, preview = false } = {}) {
-  const state = { questions: PUBLIC_QUESTIONS, error, values: { name: values.name || '', email: values.email || '', website: values.website || '' }, answers, preview };
+  const state = { questions: PUBLIC_QUESTIONS, error, values: { name: values.name || '', email: values.email || '', website: values.website || '', consent: !!values.consent }, answers, preview };
   const body = `
 <section class="hero-sub on-dark" id="quiz">
   <div class="hero-sub-bg" aria-hidden="true"><img src="${ASSET}hero-ship-wide.webp" alt="" width="2400" height="1029" fetchpriority="high"></div>
@@ -116,7 +116,7 @@ export const QUIZ_JS = `(function(){
 var S=window.__CQ,ALL=S.questions,Q=ALL,N=ALL.length,card=document.getElementById('qcard'),answers=S.answers||{},idx=0;
 function shown(q){if(!q.only)return true;for(var k in q.only){if(answers[k]&&q.only[k].indexOf(answers[k])<0)return false}return true}
 function refresh(){Q=ALL.filter(shown);N=Q.length;ALL.forEach(function(q){if(!shown(q))delete answers[q.id]})}
-var PRIVACY='${PRIVACY}';
+var PRIVACY='${PRIVACY}',CONSENT=${JSON.stringify(CONSENT_TEXT)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 var sid;try{sid=sessionStorage.getItem('cq_sid')}catch(e){}
 if(!sid){sid=Math.random().toString(36).slice(2,12);try{sessionStorage.setItem('cq_sid',sid)}catch(e){}}
@@ -142,13 +142,16 @@ card.innerHTML='<div class="qtop"><button type="button" class="back">&larr; Back
 '<div class="field"><label for="cq-web">Your website <span class="opt-l">(optional)</span></label><input id="cq-web" name="website" autocomplete="url" inputmode="url" maxlength="200" placeholder="example.com" value="'+esc(v.website)+'"></div>'+
 '<div class="hp" aria-hidden="true"><label for="cq-hp">Leave blank</label><input id="cq-hp" name="company_url" tabindex="-1" autocomplete="off"></div>'+
 '<input type="hidden" name="answers" value="'+esc(JSON.stringify(answers))+'"><input type="hidden" name="utm" value="'+esc(JSON.stringify(utm))+'"><input type="hidden" name="ref" value="'+esc(document.referrer.slice(0,300))+'"><input type="hidden" name="sid" value="'+esc(sid)+'">'+
+'<label class="consent" for="cq-consent"><input type="checkbox" id="cq-consent" name="consent" value="yes" required'+(v.consent?' checked':'')+'><span>'+esc(CONSENT)+'</span></label>'+
 '<button type="submit" class="btn btn--block">Show my result</button>'+
-'<p class="fine">By getting your result, you agree that Navigator Multimedia can email you your result and follow up once about it. Unsubscribe any time. <a href="'+PRIVACY+'" target="_blank" rel="noopener">Privacy policy</a></p></form>';
+'<p class="fine">Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2. 250 862 9868. hello@navigator.ca. <a href="'+PRIVACY+'" target="_blank" rel="noopener">Privacy policy</a></p></form>';
 card.querySelector('h3').focus({preventScroll:true});
 card.querySelector('.back').onclick=function(){refresh();idx=N-1;showQ()};
 var f=card.querySelector('form');f.onsubmit=function(e){var n=f.name.value.trim(),m=f.email.value.trim();
-if(!n){e.preventDefault();S.values={name:n,email:m,website:f.website.value};gate('Please enter your first name.');return}
-if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(m)){e.preventDefault();S.values={name:n,email:m,website:f.website.value};gate('Please enter a valid email address.');return}
+var c=f.consent.checked;S.values={name:n,email:m,website:f.website.value,consent:c};
+if(!n){e.preventDefault();gate('Please enter your first name.');return}
+if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(m)){e.preventDefault();gate('Please enter a valid email address.');return}
+if(!c){e.preventDefault();gate('Please tick the box so we can email you your result.');return}
 ev('submit');var btn=f.querySelector('button[type=submit]');
 if(S.preview&&window.__CQ_PREVIEW_SUBMIT){e.preventDefault();window.__CQ_PREVIEW_SUBMIT({name:n,email:m,website:f.website.value},answers);return}
 setTimeout(function(){btn.disabled=true;btn.textContent='Working out your result...'},0)}}

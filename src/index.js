@@ -2,7 +2,7 @@ import { score, cleanAnswers } from './quiz.js';
 import { landingPage } from './pages/landing.js';
 import { resultPage } from './pages/result.js';
 import { notify } from './email.js';
-import { newId, cleanWebsite, PERSONAL_DOMAINS } from './lib/util.js';
+import { newId, cleanWebsite, PERSONAL_DOMAINS, CONSENT_TEXT, CONSENT_VERSION } from './lib/util.js';
 import { pageViewPixel, leadPixel, withHead, freshCookie, clearFreshCookie, freshId } from './lib/pixel.js';
 
 const html = (body, status = 200, extra = {}) => new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', ...extra } });
@@ -25,13 +25,16 @@ function parseJson(s, fallback) {
 async function submit(request, env, ctx, fetchImpl) {
   const f = await readForm(request);
   const answers = cleanAnswers(parseJson(f.answers, {}));
-  const values = { name: f.name, email: f.email, website: f.website };
+  const consent = f.consent === 'yes' || f.consent === true;
+  const values = { name: f.name, email: f.email, website: f.website, consent };
   if (f.company_url) return landing({ error: 'Something went wrong. Please try again.', values, answers }, env, 400); // honeypot
   if (!answers) return landing({ error: 'Some answers were missing. Please take the quiz again.', values }, env, 400);
   const name = String(f.name || '').trim().slice(0, 80);
   const email = String(f.email || '').trim().toLowerCase().slice(0, 160);
   if (!name) return landing({ error: 'Please enter your first name.', values, answers }, env, 400);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return landing({ error: 'Please enter a valid email address.', values, answers }, env, 400);
+  // Mandatory marketing opt-in: no tick, no result, and nothing is stored or emailed.
+  if (!consent) return landing({ error: 'Please tick the box so we can email you your result.', values, answers }, env, 400);
 
   const r = score(answers);
   const utm = parseJson(f.utm, {});
@@ -44,10 +47,10 @@ async function submit(request, env, ctx, fetchImpl) {
   };
   const { why, skip, ...stored } = r; // store the numbers; the wording is rebuilt from the answers on display, so copy edits apply to old results
   await env.DB.prepare(
-    `INSERT INTO results (id, created_at, name, email, website, personal, answers_json, result_json, top, second, hot, flags, utm, ref, sid)
-     VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO results (id, created_at, name, email, website, personal, answers_json, result_json, top, second, hot, flags, utm, ref, sid, consent_at, consent_text, consent_version)
+     VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?)`
   ).bind(row.id, row.name, row.email, row.website, row.personal, JSON.stringify(answers), JSON.stringify(stored), r.top, r.second,
-    r.hot ? 1 : 0, r.flags.join(','), row.utm, row.ref, row.sid).run();
+    r.hot ? 1 : 0, r.flags.join(','), row.utm, row.ref, row.sid, CONSENT_TEXT, CONSENT_VERSION).run();
 
   const send = (async () => {
     const errors = await notify(env, row, r, answers, fetchImpl);

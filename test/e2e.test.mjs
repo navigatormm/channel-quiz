@@ -19,7 +19,7 @@ test('landing renders the quiz with questions but no weights', async () => {
 
 test('submit stores, emails both people, redirects, and the result page fires Lead once', async () => {
   const env = ENV(), sent = [];
-  const res = await worker.fetch(new Request('https://channel.navigator.ca/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'pat@acme.ca', website: 'https://www.acme.ca/about', answers: JSON.stringify(answers), utm: JSON.stringify({ utm_source: 'meta', evil: 'x' }), ref: '', sid: 'abc123' }) }), env, null, fakeFetch(sent));
+  const res = await worker.fetch(new Request('https://channel.navigator.ca/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'pat@acme.ca', website: 'https://www.acme.ca/about', consent: 'yes', answers: JSON.stringify(answers), utm: JSON.stringify({ utm_source: 'meta', evil: 'x' }), ref: '', sid: 'abc123' }) }), env, null, fakeFetch(sent));
   assert.equal(res.status, 303);
   const loc = res.headers.get('location');
   const id = loc.split('/r/')[1];
@@ -30,6 +30,7 @@ test('submit stores, emails both people, redirects, and the result page fires Le
   assert.equal(row.flags, 'foundation');
   assert.equal(row.utm, '{"utm_source":"meta"}');
   assert.equal(row.notify_error, null);
+  assert.ok(row.consent_at && /I can unsubscribe at any time/.test(row.consent_text) && row.consent_version, 'consent proof stored');
   assert.ok(!JSON.parse(row.result_json).why, 'wording not stored');
 
   const pm = sent.filter(s => s.url.includes('postmarkapp'));
@@ -63,6 +64,9 @@ test('bad submissions go back to the form with the answers kept', async () => {
   assert.match(body, /"answers":\{"who":"people"/);
   res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'p@a.ca', answers: '{"who":"biz"}' }) }), env, null, fakeFetch([]));
   assert.match(await res.text(), /Some answers were missing/);
+  res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'p@a.ca', answers: JSON.stringify(answers) }) }), env, null, fakeFetch([]));
+  assert.equal(res.status, 400, 'no opt-in tick, no result');
+  assert.match(await res.text(), /Please tick the box/);
   res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Bot', email: 'b@a.ca', company_url: 'spam', answers: JSON.stringify(answers) }) }), env, null, fakeFetch([]));
   assert.equal(res.status, 400);
   assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM results').first()).n, 0);

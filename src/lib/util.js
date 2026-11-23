@@ -2,6 +2,11 @@ export function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Marketing opt-in wording (CASL express consent). The exact text a person agreed to is stored with their result,
+// so change the version date whenever the wording changes.
+export const CONSENT_VERSION = '2026-11-23';
+export const CONSENT_TEXT = 'Yes, email me my result, plus marketing tips and offers from Navigator Multimedia. I can unsubscribe at any time.';
+
 export function newId() {
   const b = new Uint8Array(9);
   crypto.getRandomValues(b);

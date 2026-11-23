@@ -37,6 +37,7 @@ export function leadAlert(env, row, r, answers) {
     row.utm && row.utm !== '{}' ? `Source: ${row.utm}` : '',
     row.ref ? `Referrer: ${row.ref}` : '',
     '',
+    'Marketing consent: yes (ticked the opt-in box on the form).',
     'Reply to this email to reach them directly.',
   ].filter((l, i, a) => l !== '' || a[i - 1] !== '');
   const subject = `${r.hot ? 'Hot lead: ' : 'New quiz lead: '}${row.website || row.email} (${CHANNELS[r.top].name})`;
@@ -77,7 +78,7 @@ export function resultEmail(env, row, r) {
 <p>Your result page has a 90-day plan for ${esc(CHANNELS[r.top].name.toLowerCase())} and the trade-offs to watch for.</p>
 <p>The quiz works from your answers alone. If you'd like a second opinion that looks at your website, your market and your numbers, <a href="${esc(env.CTA_URL)}" style="color:#0A0A0A">book a free 30-minute strategy call</a>.</p>
 <p>Here's to your success!<br>The Team at Navigator</p>
-<p style="font-size:12px;color:#5f5e5b">Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2, 250-862-9868. You're getting this because you asked for your quiz result at channel.navigator.ca. Reply "unsubscribe" and we won't email you again.</p>
+<p style="font-size:12px;color:#5f5e5b">Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2, 250-862-9868. You're getting this because you asked for your quiz result at channel.navigator.ca and agreed to hear from us by email. Reply "unsubscribe" and we won't email you again.</p>
 </div>`;
   return { subject: `Your quiz result: start with ${CHANNELS[r.top].name}`, text, html };
 }
@@ -101,7 +102,7 @@ export async function notify(env, row, r, answers, fetchImpl = fetch) {
   if (env.NOTIFY_WEBHOOK) {
     const payload = {
       source: 'channel-quiz', id: row.id, url: urlFor(env, row.id), name: row.name, email: row.email, website: row.website,
-      personal: !!row.personal, result: r.top, second: r.second, fit: r.fit, flags: r.flags, hot: r.hot, answers,
+      personal: !!row.personal, marketing_consent: true, result: r.top, second: r.second, fit: r.fit, flags: r.flags, hot: r.hot, answers,
       utm: JSON.parse(row.utm || '{}'),
     };
     try {

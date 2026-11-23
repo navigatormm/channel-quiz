@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS results (
   result_json TEXT NOT NULL,        -- score() output: ranked, fit, top, second, last, why, skip, flags, hot
   top TEXT, second TEXT, hot INTEGER DEFAULT 0, flags TEXT,
   utm TEXT, ref TEXT, sid TEXT,
+  -- Proof of marketing consent (CASL): when they ticked the box and the exact wording they agreed to.
+  consent_at TEXT, consent_text TEXT, consent_version TEXT,
   notify_error TEXT
 );
 CREATE INDEX IF NOT EXISTS results_created ON results (created_at);
