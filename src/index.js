@@ -7,7 +7,7 @@ import { pageViewPixel, leadPixel, withHead, freshCookie, clearFreshCookie, fres
 
 const html = (body, status = 200, extra = {}) => new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', ...extra } });
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
-const EVENTS = new Set(['start', 'gate', 'submit', ...Array.from({ length: 10 }, (_, i) => 'q' + (i + 1))]);
+const EVENTS = new Set(['start', 'gate', 'submit', ...Array.from({ length: 11 }, (_, i) => 'q' + (i + 1))]);
 
 const landing = (opts, env, status = 200) => html(withHead(landingPage(opts), pageViewPixel(env)), status);
 
@@ -74,7 +74,7 @@ async function funnel(env, days) {
     `SELECT event, COUNT(DISTINCT sid) AS sessions FROM events WHERE created_at >= datetime('now', ?) GROUP BY event`
   ).bind(since).all();
   const by = Object.fromEntries((results || []).map(r => [r.event, r.sessions]));
-  const order = ['start', ...Array.from({ length: 10 }, (_, i) => 'q' + (i + 1)), 'gate', 'submit'];
+  const order = ['start', ...Array.from({ length: 11 }, (_, i) => 'q' + (i + 1)), 'gate', 'submit'];
   const leads = await env.DB.prepare(`SELECT COUNT(*) AS n, SUM(hot) AS hot FROM results WHERE created_at >= datetime('now', ?)`).bind(since).first();
   const tops = await env.DB.prepare(`SELECT top, COUNT(*) AS n FROM results WHERE created_at >= datetime('now', ?) GROUP BY top ORDER BY n DESC`).bind(since).all();
   return { since, funnel: order.map(e => ({ step: e, sessions: by[e] || 0 })), leads: leads?.n || 0, hot: leads?.hot || 0, results: tops.results || [] };

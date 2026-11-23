@@ -5,13 +5,13 @@ import { makeD1, fakeFetch, ANS } from './harness.mjs';
 
 const ENV = () => ({ DB: makeD1(), POSTMARK_TOKEN: 'pm', NOTIFY_TO: 'jessey@navigator.ca', NOTIFY_FROM: 'quiz@navigator.ca', CTA_URL: 'https://book.test', PUBLIC_ORIGIN: 'https://channel.navigator.ca', META_PIXEL_ID: '123', ADMIN_TOKEN: 'secret' });
 const form = obj => { const f = new FormData(); for (const [k, v] of Object.entries(obj)) f.append(k, v); return f; };
-const answers = ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k', 'untracked', 'day');
+const answers = ANS('people', 'local', 'problem', 'google', 'anyone', 'few', '1k_5k', 'now', '2500_5k', 'many', 'rarely');
 
 test('landing renders the quiz with questions but no weights', async () => {
   const res = await worker.fetch(new Request('https://channel.navigator.ca/'), ENV());
   const body = await res.text();
   assert.equal(res.status, 200);
-  assert.match(body, /Which Marketing Channel Should You Start With\?/);
+  assert.match(body, /Need More Customers\? Find Out Where to Start\./);
   assert.match(body, /fbq\('track','PageView'\)/);
   assert.ok(body.includes('"id":"budget"'));
   assert.ok(!body.includes('"w":'), 'weights not shipped to the browser');
@@ -27,7 +27,7 @@ test('submit stores, emails both people, redirects, and the result page fires Le
   assert.equal(row.website, 'acme.ca');
   assert.equal(row.top, 'google');
   assert.equal(row.hot, 1);
-  assert.equal(row.flags, 'tracking');
+  assert.equal(row.flags, 'foundation');
   assert.equal(row.utm, '{"utm_source":"meta"}');
   assert.equal(row.notify_error, null);
   assert.ok(!JSON.parse(row.result_json).why, 'wording not stored');
@@ -37,7 +37,7 @@ test('submit stores, emails both people, redirects, and the result page fires Le
   const alert = pm.find(s => s.body.To === 'jessey@navigator.ca').body;
   assert.match(alert.Subject, /^Hot lead: acme\.ca \(Google Ads\)$/);
   assert.equal(alert.ReplyTo, 'pat@acme.ca');
-  assert.match(alert.TextBody, /How fast does someone get back|how fast does someone get back/i);
+  assert.match(alert.TextBody, /Roughly how many Google reviews does your business have\? More than 50/);
   const mine = pm.find(s => s.body.To === 'pat@acme.ca').body;
   assert.match(mine.Subject, /Google Ads/);
   assert.match(mine.TextBody, /Here's to your success!\nThe Team at Navigator/);
@@ -48,7 +48,7 @@ test('submit stores, emails both people, redirects, and the result page fires Le
   const html = await first.text();
   assert.match(html, /Start With Google Ads/);
   assert.match(html, /fbq\('track','Lead'/);
-  assert.match(html, /Set up lead tracking first/);
+  assert.match(html, /Fix the website before you pay to send people to it/);
   assert.match(first.headers.get('set-cookie'), /Max-Age=0/);
   const again = await (await worker.fetch(new Request(loc), env)).text();
   assert.ok(!again.includes("'Lead'"));
@@ -60,8 +60,8 @@ test('bad submissions go back to the form with the answers kept', async () => {
   assert.equal(res.status, 400);
   const body = await res.text();
   assert.match(body, /valid email/);
-  assert.match(body, /"answers":\{"who":"local_biz"/);
-  res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'p@a.ca', answers: '{"who":"local_biz"}' }) }), env, null, fakeFetch([]));
+  assert.match(body, /"answers":\{"who":"people"/);
+  res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Pat', email: 'p@a.ca', answers: '{"who":"biz"}' }) }), env, null, fakeFetch([]));
   assert.match(await res.text(), /Some answers were missing/);
   res = await worker.fetch(new Request('https://x/api/submit', { method: 'POST', body: form({ name: 'Bot', email: 'b@a.ca', company_url: 'spam', answers: JSON.stringify(answers) }) }), env, null, fakeFetch([]));
   assert.equal(res.status, 400);

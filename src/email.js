@@ -31,7 +31,7 @@ export function leadAlert(env, row, r, answers) {
     r.flags.length ? `Flags: ${r.flags.map(f => FLAGS[f][0]).join('; ')}.` : '',
     '',
     'Answers:',
-    ...QUESTIONS.map(q => `- ${q.q} ${q.options.find(o => o.id === answers[q.id])?.label || ''}`),
+    ...QUESTIONS.filter(q => answers[q.id]).map(q => `- ${q.q} ${q.options.find(o => o.id === answers[q.id])?.label || ''}`),
     '',
     `Result page: ${urlFor(env, row.id)}`,
     row.utm && row.utm !== '{}' ? `Source: ${row.utm}` : '',
@@ -51,11 +51,11 @@ export function resultEmail(env, row, r) {
   const text = [
     `Hi ${first},`,
     '',
-    `Thanks for taking the channel quiz. Your answers point to: ${CHANNELS[r.top].name}.`,
+    `Thanks for taking the quiz. Your answers point to: ${CHANNELS[r.top].name}.`,
     '',
     c.summary,
     '',
-    'How each channel fits:',
+    'How each option fits:',
     ...fits.map(f => '- ' + f),
     '',
     `Your full result, with a 90-day plan and what to watch out for: ${url}`,
@@ -67,19 +67,19 @@ export function resultEmail(env, row, r) {
     'The Team at Navigator',
     'Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2, 250-862-9868',
   ].join('\n');
-  const html = `<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1C2E3A;max-width:560px">
+  const html = `<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#0A0A0A;max-width:560px">
 <p>Hi ${esc(first)},</p>
-<p>Thanks for taking the channel quiz. Your answers point to:</p>
+<p>Thanks for taking the quiz. Your answers point to:</p>
 <p style="font-size:22px;font-weight:800;margin:8px 0 4px">${esc(c.headline)}</p>
 <p>${esc(c.summary)}</p>
-<table role="presentation" style="border-collapse:collapse;margin:12px 0 16px">${r.ranked.map(k => `<tr><td style="padding:4px 14px 4px 0">${esc(CHANNELS[k].name)}</td><td style="padding:4px 0;font-weight:700">${r.fit[k]}%</td><td style="padding:4px 0 4px 10px;color:#55636E">${fitLabel(r.fit[k])}</td></tr>`).join('')}</table>
-<p><a href="${esc(url)}" style="display:inline-block;background:#FCBF49;color:#16252F;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:8px">See your full result</a></p>
+<table role="presentation" style="border-collapse:collapse;margin:12px 0 16px">${r.ranked.map(k => `<tr><td style="padding:4px 14px 4px 0">${esc(CHANNELS[k].name)}</td><td style="padding:4px 0;font-weight:700">${r.fit[k]}%</td><td style="padding:4px 0 4px 10px;color:#5f5e5b">${fitLabel(r.fit[k])}</td></tr>`).join('')}</table>
+<p><a href="${esc(url)}" style="display:inline-block;background:#0A0A0A;color:#EFEEE8;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:999px">See your full result</a></p>
 <p>Your result page has a 90-day plan for ${esc(CHANNELS[r.top].name.toLowerCase())} and the trade-offs to watch for.</p>
-<p>The quiz works from your answers alone. If you'd like a second opinion that looks at your website, your market and your numbers, <a href="${esc(env.CTA_URL)}" style="color:#4F90C6">book a free 30-minute strategy call</a>.</p>
+<p>The quiz works from your answers alone. If you'd like a second opinion that looks at your website, your market and your numbers, <a href="${esc(env.CTA_URL)}" style="color:#0A0A0A">book a free 30-minute strategy call</a>.</p>
 <p>Here's to your success!<br>The Team at Navigator</p>
-<p style="font-size:12px;color:#55636E">Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2, 250-862-9868. You're getting this because you asked for your quiz result at channel.navigator.ca. Reply "unsubscribe" and we won't email you again.</p>
+<p style="font-size:12px;color:#5f5e5b">Navigator Multimedia, 460 Doyle Ave #201, Kelowna, BC V1Y 0C2, 250-862-9868. You're getting this because you asked for your quiz result at channel.navigator.ca. Reply "unsubscribe" and we won't email you again.</p>
 </div>`;
-  return { subject: `Your marketing channel result: ${CHANNELS[r.top].name}`, text, html };
+  return { subject: `Your quiz result: start with ${CHANNELS[r.top].name}`, text, html };
 }
 
 export async function notify(env, row, r, answers, fetchImpl = fetch) {

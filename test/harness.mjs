@@ -20,5 +20,9 @@ export function fakeFetch(sent) {
   };
 }
 
-export const ANS = (who, search, urgency, visual, value, capacity, timing, budget, website = 'tracked', followup = 'hour') =>
-  ({ who, search, urgency, visual, value, capacity, timing, budget, website, followup });
+// who, where, kind, source, list, photos, value, timing, budget, reviews (omit for "anywhere"), website
+export const ANS = (who, where, kind, source, list, photos, value, timing, budget, reviews, website = 'regular') => {
+  const a = { who, where, kind, source, list, photos, value, timing, budget, website };
+  if (where !== 'anywhere') a.reviews = reviews;
+  return a;
+};

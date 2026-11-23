@@ -1,66 +1,84 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { score, cleanAnswers, QUESTIONS, CHANNEL_KEYS, fitLabel } from '../src/quiz.js';
+import { score, cleanAnswers, applies, QUESTIONS, CHANNEL_KEYS, fitLabel } from '../src/quiz.js';
 import { RESULT, FLAGS } from '../src/content.js';
 import { resultBody } from '../src/render.js';
 import { ANS } from './harness.mjs';
 
 const top = a => score(a).top;
+const P = {
+  plumberNew: ANS('people', 'local', 'problem', 'referral', 'anyone', 'few', '1k_5k', '3mo', '1k_2500', 'few'),
+  plumberEstablished: ANS('people', 'local', 'problem', 'google', 'anyone', 'few', '1k_5k', 'now', '2500_5k', 'many'),
+  cafe: ANS('people', 'local', 'want', 'passby', 'anyone', 'lots', 'u250', 'now', 'u1k', 'mid'),
+  manufacturer: ANS('biz', 'anywhere', 'planned', 'sales', 'named', 'few', '100k', '3mo', '2500_5k'),
+  store: ANS('people', 'anywhere', 'want', 'social', 'anyone', 'lots', 'u250', 'now', '5k_10k'),
+  consultant: ANS('biz', 'anywhere', 'planned', 'referral', 'type', 'none', '5k_25k', 'long', '1k_2500'),
+  tourism: ANS('people', 'visitors', 'want', 'google', 'anyone', 'lots', '250_1k', '3mo', '5k_10k', 'mid'),
+  newProduct: ANS('biz', 'anywhere', 'new', 'unsure', 'type', 'none', '1k_5k', '3mo', '2500_5k'),
+  roofer: ANS('people', 'local', 'planned', 'referral', 'anyone', 'lots', '5k_25k', 'now', '5k_10k', 'many'),
+};
 
 test('personas land on the channel a strategist would pick', () => {
-  assert.equal(top(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500')), 'local', 'plumber');
-  assert.equal(top(ANS('local_people', 'impulse', 'want', 'very', 'u250', '20plus', 'now', 'u1k')), 'meta', 'cafe');
-  assert.equal(top(ANS('national_biz', 'research', 'long', 'no', '100k', 'few', '3mo', '2500_5k')), 'outreach', 'B2B manufacturer');
-  assert.equal(top(ANS('national_people', 'impulse', 'want', 'very', '250_1k', 'unlimited', 'now', '5k_10k')), 'meta', 'online store');
-  assert.equal(top(ANS('national_biz', 'research', 'planned', 'no', '5k_25k', '5_20', 'long', '1k_2500')), 'seo', 'national professional services');
-  assert.equal(top(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k')), 'google', 'local B2B service, decent budget');
-  assert.equal(top(ANS('local_people', 'google', 'now', 'some', 'u250', '20plus', 'now', 'u1k')), 'local', 'small local trade on a tight budget');
+  assert.equal(top(P.plumberNew), 'local', 'local trade with few reviews fixes the listing first');
+  assert.equal(top(P.plumberEstablished), 'google', 'same trade with 50+ reviews and budget moves to ads');
+  assert.equal(top(P.cafe), 'local');
+  assert.equal(top(P.manufacturer), 'outreach');
+  assert.equal(top(P.store), 'meta');
+  assert.equal(top(P.consultant), 'seo');
+  assert.equal(top(P.tourism), 'meta');
+  assert.equal(top(P.newProduct), 'outreach');
+  assert.equal(top(P.roofer), 'google');
 });
 
-test('visitors keep local search in play; national sellers do not', () => {
-  const v = score(ANS('visitors', 'research', 'want', 'very', '250_1k', '20plus', '3mo', '5k_10k'));
-  assert.ok(v.fit.local >= 50, 'tourism operator local fit ' + v.fit.local);
-  const n = score(ANS('national_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500'));
-  assert.ok(n.fit.local <= 10);
+test('hard rules', () => {
+  assert.ok(score(P.store).fit.local <= 10, 'sells anywhere: no local search');
+  assert.ok(score(P.cafe).fit.outreach <= 20, 'cannot name customers: no outreach');
+  assert.ok(score(P.plumberNew).fit.meta <= 40, 'problem purchase: Meta capped');
+  assert.ok(score(P.store).fit.google <= 35, 'a want: Google Ads capped');
+  assert.ok(score(P.tourism).fit.local >= 50, 'visitors keep local search in play');
+});
+
+test('reviews question only applies to local and visitor businesses', () => {
+  assert.equal(applies(QUESTIONS.find(q => q.id === 'reviews'), { where: 'anywhere' }), false);
+  assert.equal(cleanAnswers({ ...P.store, reviews: 'many' }).reviews, undefined, 'stray answer dropped');
+  const { reviews, ...missing } = P.cafe;
+  assert.equal(cleanAnswers(missing), null, 'required when local');
 });
 
 test('flags', () => {
-  assert.deepEqual(score(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends')).flags, ['foundation', 'speed']);
-  assert.deepEqual(score(ANS('national_biz', 'research', 'planned', 'no', '5k_25k', '5_20', 'long', '1k_2500', 'untracked', 'days')).flags, ['tracking'], 'no speed flag when SEO wins');
-  assert.ok(score(ANS('local_people', 'impulse', 'want', 'very', 'u250', '20plus', 'now', 'u1k')).flags.includes('smallbudget'));
+  assert.deepEqual(score({ ...P.plumberNew, website: 'rarely' }).flags, ['foundation']);
+  assert.deepEqual(score({ ...P.plumberNew, website: 'none' }).flags, ['nosite']);
+  assert.ok(score({ ...P.store, budget: 'u1k' }).flags.includes('smallbudget'));
 });
 
 test('hot lead = $2,500+ all-in budget and results within three months', () => {
-  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k')).hot, true);
-  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', 'long', '10k')).hot, false);
+  assert.equal(score(P.manufacturer).hot, true);
+  assert.equal(score(P.consultant).hot, false);
 });
 
-test('every answer combination scores without errors and fits stay 0 to 100', () => {
-  let n = 0;
+const each = fn => {
   const walk = (i, a) => {
-    if (i === QUESTIONS.length) { const r = score(a); n++; for (const k of CHANNEL_KEYS) assert.ok(r.fit[k] >= 0 && r.fit[k] <= 100); assert.equal(r.ranked.length, 5); return; }
-    for (const o of QUESTIONS[i].options) walk(i + 1, { ...a, [QUESTIONS[i].id]: o.id });
+    if (i === QUESTIONS.length) return fn(a);
+    const q = QUESTIONS[i];
+    if (!applies(q, a)) return walk(i + 1, a);
+    if (q.id === 'website') return walk(i + 1, { ...a, website: 'regular' });
+    for (const o of q.options) walk(i + 1, { ...a, [q.id]: o.id });
   };
   walk(0, {});
-  assert.ok(n > 10000);
-});
+};
 
-test('every channel can win', () => {
-  const wins = new Set();
-  const walk = (i, a) => {
-    if (i === 8) { wins.add(score({ ...a, website: 'tracked', followup: 'hour' }).top); return; }
-    for (const o of QUESTIONS[i].options) walk(i + 1, { ...a, [QUESTIONS[i].id]: o.id });
-  };
-  walk(0, {});
+test('every answer combination scores cleanly and every channel can win', () => {
+  let n = 0; const wins = new Set();
+  each(a => { const r = score(a); n++; wins.add(r.top); for (const k of CHANNEL_KEYS) assert.ok(r.fit[k] >= 0 && r.fit[k] <= 100); });
+  assert.ok(n > 100000);
   assert.deepEqual([...wins].sort(), [...CHANNEL_KEYS].sort());
 });
 
 test('cleanAnswers rejects missing and unknown answers', () => {
-  const ok = ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500');
-  assert.deepEqual(cleanAnswers(ok), ok);
-  assert.equal(cleanAnswers({ ...ok, budget: 'lots' }), null);
-  const { timing, ...missing } = ok;
+  assert.deepEqual(cleanAnswers(P.cafe), P.cafe);
+  assert.equal(cleanAnswers({ ...P.cafe, budget: 'lots' }), null);
+  const { timing, ...missing } = P.cafe;
   assert.equal(cleanAnswers(missing), null);
 });
 
@@ -73,6 +91,7 @@ test('copy: no em or en dashes anywhere in source', () => {
 
 test('copy: banned words and superlatives stay out', () => {
   const s = ['quiz.js', 'content.js', 'render.js', 'email.js', 'pages/landing.js'].map(f => readFileSync(new URL('../src/' + f, import.meta.url), 'utf8')).join('\n').toLowerCase();
+  assert.ok(!/channel/.test(['content.js', 'render.js', 'pages/landing.js'].map(f => readFileSync(new URL('../src/' + f, import.meta.url), 'utf8').replace(/\/\/.*$/gm, '')).join('').replace(/CHANNELS|CHANNEL_KEYS|channel-quiz|channel\.navigator/g, '')), 'visitor copy says "channel"');
   for (const w of ['unlock', 'elevate', 'game-changer', 'game changer', 'delve', 'seamless', 'robust', 'leading', 'most trusted', 'guarantee']) assert.ok(!s.includes(w), w);
   // "best" is fine as plain advice ("best when", "best customers"); never as a claim about Navigator.
   const claims = s.replace(/best (when|customers|time)|work best|class="best"|best\[k\]|const best =/g, '');
@@ -81,10 +100,11 @@ test('copy: banned words and superlatives stay out', () => {
 
 test('result body renders every channel with flags', () => {
   for (const k of CHANNEL_KEYS) assert.ok(RESULT[k].first90.length === 3 && RESULT[k].watch.length === 3);
-  const r = score(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends'));
-  const html = resultBody({ ...r, answers: ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends'), name: 'Pat <b>' }, { ctaUrl: 'https://x.test/book' });
+  const answers = { ...P.plumberNew, website: 'rarely' };
+  const r = score(answers);
+  const html = resultBody({ ...r, answers, name: 'Pat <b>' }, { ctaUrl: 'https://x.test/book' });
   assert.match(html, /Start With Local Search/);
-  assert.match(html, /Pat, your channel result/);
+  assert.match(html, /Pat, your result/);
   assert.ok(!html.includes('<b>,'), 'name escaped');
   assert.match(html, new RegExp(FLAGS.foundation[0]));
   assert.match(html, /https:\/\/x\.test\/book/);

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS results (
 );
 CREATE INDEX IF NOT EXISTS results_created ON results (created_at);
 
--- Funnel events from the quiz page: start, q1..q10, gate, submit. One row per session per step.
+-- Funnel events from the quiz page: start, q1..q11, gate, submit. One row per session per step.
 CREATE TABLE IF NOT EXISTS events (
   sid TEXT NOT NULL,
   event TEXT NOT NULL,

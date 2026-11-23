@@ -32,7 +32,7 @@ export function resultBody(r, o) {
 
   const flags = r.flags.map(f => `<div class="flagbox"><h3>${escR(FLAGS[f][0])}</h3><p>${escR(FLAGS[f][1])}</p></div>`).join('');
 
-  const answers = QUESTIONS.map(q => {
+  const answers = QUESTIONS.filter(q => r.answers[q.id]).map(q => {
     const opt = q.options.find(x => x.id === r.answers[q.id]);
     return `<li><span>${escR(q.q)}</span><b>${escR(opt ? opt.label : '')}</b></li>`;
   }).join('');
@@ -41,7 +41,7 @@ export function resultBody(r, o) {
 <section class="hero-sub on-dark res-hero">
   <div class="hero-sub-bg" aria-hidden="true"><img src="${ART[top]}" alt="" width="800" height="531"></div>
   <div class="wrap">
-    <p class="eyebrow">${name ? escR(name) + ', your' : 'Your'} channel result</p>
+    <p class="eyebrow">${name ? escR(name) + ', your' : 'Your'} result</p>
     <h1>${escR(c.headline)}</h1>
     <p class="lede">${escR(c.summary)}</p>
   </div>
@@ -49,8 +49,8 @@ export function resultBody(r, o) {
 
 <section class="section"><div class="wrap">
   <div class="head-split">
-    <div>${ROUTE}<h2>How Each Channel Fits</h2></div>
-    <p class="lede">Based on your answers about who buys, how they decide, what they spend and how fast you need results.</p>
+    <div>${ROUTE}<h2>How Each Option Fits</h2></div>
+    <p class="lede">Based on your answers about who you sell to, what you sell, what customers spend and how soon you need results.</p>
   </div>
   <div class="card"><ol class="fits">${bars}</ol></div>
   ${flags ? `<div class="flags">${flags}</div>` : ''}
@@ -76,7 +76,7 @@ export function resultBody(r, o) {
 <section class="section section--paper"><div class="wrap">
   <div class="head-split">
     <div>${ROUTE}<h2>What to Watch Out For</h2></div>
-    <p class="lede">Every channel has trade-offs. Here are this one's.</p>
+    <p class="lede">Every kind of marketing has trade-offs. Here are this one's.</p>
   </div>
   <ul class="watch">${c.watch.map(([t, d]) => `<li><h3>${escR(t)}</h3><p>${escR(d)}</p></li>`).join('')}</ul>
 </div></section>

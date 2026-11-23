@@ -1,6 +1,6 @@
 # Channel Quiz
 
-Quiz funnel lead magnet for Navigator Multimedia at `https://channel.navigator.ca`. A visitor answers 10 questions and learns which of five channels to start with: Google Ads, Facebook and Instagram ads, SEO and AI search, local search, or direct outreach. Email is gated before the result. The result page shows a fit score for all five channels, the reasons from their own answers, a 90-day plan, trade-offs, a runner-up, one channel to hold off on, and the strategy-call CTA.
+Quiz funnel lead magnet for Navigator Multimedia at `https://channel.navigator.ca`. A visitor answers 10 or 11 questions and learns which of five channels to start with: Google Ads, Facebook and Instagram ads, SEO and AI search, local search, or direct outreach. Email is gated before the result. The result page shows a fit score for all five channels, the reasons from their own answers, a 90-day plan, trade-offs, a runner-up, one channel to hold off on, and the strategy-call CTA.
 
 Styled to match the rebuilt navigator.ca (shared kit in `src/pages/brand.js`, same file as in `redesign-risk-audit`; images load from www.navigator.ca/assets). Same stack and deploy pattern as `redesign-risk-audit` and `ownership-check`: one Cloudflare Worker on the Free plan, D1, Postmark, Workers Builds from GitHub.
 
@@ -8,7 +8,7 @@ Styled to match the rebuilt navigator.ca (shared kit in `src/pages/brand.js`, sa
 
 ```
 GET /            landing + quiz (one question per screen, in the hero card)
-POST /api/e      funnel events from the page: start, q1..q10, gate, submit (one row per session per step)
+POST /api/e      funnel events from the page: start, q1..q11, gate, submit (one row per session per step)
 POST /api/submit validate, score, store, email (in the background), 303 to /r/{id}
 GET /r/{id}      result page (noindex). First load after submit fires the Meta Lead event once.
 GET /health      config check
@@ -17,26 +17,29 @@ GET /api/admin/funnel?days=30   drop-off per step, lead count, hot leads, result
 
 ## Scoring (`src/quiz.js`)
 
-Questions 1 to 8 give each channel 0 to 5 points per answer. Fit = points / most possible points for that channel, as a percentage. Labels: 70+ Strong fit, 50 to 69 Good fit, 30 to 49 Possible, under 30 Weak fit.
+Design rule (v3, 2026-11-23): every question is a fact the owner already knows about their own business. Nothing asks them to explain how customers think or to know any marketing terms. Visitor-facing copy says "ways to get customers" or "kind of marketing", never "channel" (a test enforces it).
+
+Each answer gives each channel 0 to 5 points. Fit = points / most possible points on the questions that person saw, as a percentage. Labels: 70+ Strong fit, 50 to 69 Good fit, 30 to 49 Possible, under 30 Weak fit.
 
 | # | Question | Mostly separates |
 |---|---|---|
-| 1 | Who buys from you? | Local vs national, people vs businesses (local search, outreach) |
-| 2 | What do new customers usually say when they first get in touch? | Job to be done (search) vs comparing (research) vs saw it (discovery) vs referral |
-| 3 | How urgent is the need? | Google Ads and local vs Meta and outreach |
-| 4 | Would a photo or short video of your work make someone want to buy? | Meta |
-| 5 | What does a typical new customer spend in their first year? (revenue, not profit; six tiers from under $250 to $100k+) | Outreach at the top end, Meta and local at the bottom |
-| 6 | How many new customers a month? | Outreach (few) vs Meta and ads (many) |
-| 7 | How soon do you need business? | Paid vs SEO |
-| 8 | Monthly marketing budget, all in (ads, agency fees, tools) | Paid ads need room to learn after management costs |
-| 9 | How does the website do today? | Flags only: fix the foundation, or set up tracking |
-| 10 | How fast is lead follow-up? | Flag only: speed up follow-up |
+| 1 | Who do you sell to? (people / businesses / both) | Meta vs outreach |
+| 2 | Where are your customers? (close by / visitors / anywhere) | Local search in or out |
+| 3 | Which sounds most like what you sell? (problem / planned and compared / a want / new and unknown) | Google Ads and local vs SEO vs Meta vs outreach |
+| 4 | Where do most of your customers come from today? | Light weight: evidence of where demand already exists. Most useful line in the lead alert |
+| 5 | Could you write a list of customers you'd love to have? | Outreach |
+| 6 | Do you have photos or videos of your work you'd be proud to show off? | Meta |
+| 7 | What does a typical new customer spend in their first year? (revenue, six bands) | Whether paid clicks or one-by-one outreach can pay back |
+| 8 | How soon do you need more customers? | Paid vs SEO |
+| 9 | What can you spend each month, all in? | Paid ads need room after management costs |
+| 10 | Roughly how many Google reviews? (only shown when Q2 is close by or visitors) | Local search vs Google Ads for local businesses |
+| 11 | Does your website bring in calls or enquiries? | No points. Flags: no website, or fix the website first |
 
-Hard rule: national sellers (question 1) get local search capped at 10%. Visitors and travellers keep local search in play.
+Hard rules: sells anywhere caps local search at 10%. "Could be almost anyone" on Q5 caps outreach at 20%. A problem purchase caps Meta at 40%. A want or an unknown product caps Google Ads at 35%.
 
 Hot lead = $2,500+ a month all in, and results wanted within three months. The alert subject starts with "Hot lead:".
 
-Tests cover seven personas (plumber, cafe, B2B manufacturer, online store, national professional services, local B2B service, small local trade), every one of the ~13,000 answer combinations, that every channel can win, flags, and the brand copy rules (no em dashes, no banned words, no unqualified "best"). Tune weights in `QUESTIONS` after the first 50 real results; run `npm test` after any change.
+Tests cover nine personas, the hard rules, the conditional reviews question, every answer combination (about 525,000), that every channel can win, flags, and the brand copy rules. Before launch: run the quiz as 10 existing clients whose right answer is already known, and retune if it misses more than two. Run `npm test` after any change.
 
 Copy lives in `src/content.js` (result page) and `src/pages/landing.js`. Only the numbers are stored per result; the reasons are rebuilt from the stored answers on display, so copy edits apply to old results too.
 

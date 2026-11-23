@@ -1,83 +1,105 @@
 // Channel Quiz: questions, weights and scoring. No imports, so scripts/build-preview.mjs can inline this file
 // into the static preview page and the browser runs exactly the same scoring as the Worker.
 //
+// Design rule (v3, 2026-11-23): every question is a fact the owner already knows about their own business.
+// Nothing asks them to explain how their customers think or to know anything about marketing.
+//
 // How scoring works:
 //   Each answer gives every channel 0 to 5 points (w). A channel's fit is its points divided by the most it
-//   could have scored, as a percentage. Two hard rules sit on top (see RULES). Questions 9 and 10 carry no
-//   points; they raise flags on the result page instead (website, tracking, follow-up speed).
+//   could have scored on the questions that person saw, as a percentage. Hard rules sit on top (see RULES).
+//   `only` hides a question unless an earlier answer matches (the reviews question is for local businesses).
+//   The website question carries no points; it raises a flag on the result page.
 //   `why` is shown on the result when that answer pushed the channel up; `skip` when it pushed it down.
 
 export const CHANNELS = {
-  google: { name: 'Google Ads', title: 'Google Ads', short: 'Google Ads', blurb: 'Paid ads at the top of Google when people search for what you sell.' },
-  meta: { name: 'Facebook and Instagram ads', title: 'Facebook and Instagram Ads', short: 'Meta ads', blurb: 'Paid ads in front of the right people while they scroll, before they go looking.' },
-  seo: { name: 'SEO and AI search', title: 'SEO and AI Search', short: 'SEO and AI search', blurb: 'Showing up in Google results and AI answers without paying per click.' },
-  local: { name: 'Local search', title: 'Local Search', short: 'Local search', blurb: 'Your Google Business Profile, Maps listing and reviews, for people searching nearby.' },
-  outreach: { name: 'Direct outreach', title: 'Direct Outreach', short: 'Outreach', blurb: 'Reaching out by email, LinkedIn and phone to a hand-picked list of ideal customers.' },
+  google: { name: 'Google Ads', plain: 'Ads on Google', title: 'Google Ads', short: 'Google Ads', blurb: 'Paid ads at the top of Google when people search for what you sell.' },
+  meta: { name: 'Facebook and Instagram ads', plain: 'Ads on Facebook and Instagram', title: 'Facebook and Instagram Ads', short: 'Meta ads', blurb: 'Paid ads in front of the right people while they scroll, before they go looking.' },
+  seo: { name: 'SEO and AI search', plain: 'Showing up in Google and AI answers', title: 'SEO and AI Search', short: 'SEO and AI search', blurb: 'Showing up in Google results and AI answers without paying per click.' },
+  local: { name: 'Local search', plain: 'Google Maps and reviews', title: 'Local Search', short: 'Local search', blurb: 'Your Google Business Profile, Maps listing and reviews, for people searching nearby.' },
+  outreach: { name: 'Direct outreach', plain: 'Reaching out to customers directly', title: 'Direct Outreach', short: 'Outreach', blurb: 'Reaching out by email, LinkedIn and phone to a hand-picked list of ideal customers.' },
 };
 export const CHANNEL_KEYS = Object.keys(CHANNELS);
 
 export const QUESTIONS = [
   {
-    id: 'who', q: 'Who buys from you?',
+    id: 'who', q: 'Who do you sell to?',
     options: [
-      { id: 'local_people', label: 'People in my area (homeowners, families, locals)', w: { google: 2, meta: 2, seo: 1, local: 4, outreach: 0 },
-        why: { local: 'You sell to people nearby, and nearby is exactly what Google Maps and your Business Profile are built for.' },
-        skip: { outreach: 'You sell to individual people nearby, which makes one-by-one outreach slow and awkward.' } },
-      { id: 'local_biz', label: 'Businesses in my area', w: { google: 2, meta: 0, seo: 1, local: 3, outreach: 3 },
-        why: { local: 'Local businesses still check Google Maps when they look for a supplier, so your listing is part of how they size you up.', outreach: 'You sell to local businesses, which is a list you can name and contact directly.' },
-        skip: { meta: 'You sell to businesses, and people scrolling Facebook and Instagram are rarely in buying mode for work.' } },
+      { id: 'people', label: 'Mostly people and families', w: { google: 2, meta: 4, seo: 2, local: 3, outreach: 0 },
+        why: { meta: 'You sell to people and families, and that\'s who spends time on Facebook and Instagram.' },
+        skip: { outreach: 'You sell to people and families, so there\'s no list of customers to contact one by one.' } },
+      { id: 'biz', label: 'Mostly other businesses', w: { google: 2, meta: 0, seo: 3, local: 1, outreach: 4 },
+        why: { outreach: 'You sell to other businesses, and businesses can be found and contacted directly.', seo: 'Business buyers look things up before they call, so being the one with the answers gets you on their shortlist.' },
+        skip: { meta: 'You sell to businesses, and people scrolling Facebook and Instagram are rarely there to buy for work.' } },
+      { id: 'both', label: 'Both', w: { google: 2, meta: 2, seo: 2, local: 2, outreach: 2 } },
+    ],
+  },
+  {
+    id: 'where', q: 'Where are your customers?',
+    options: [
+      { id: 'local', label: 'Close by. They come to me, or I go to them', w: { google: 3, meta: 2, seo: 1, local: 5, outreach: 2 },
+        why: { local: 'Your customers are close by, and nearby customers pick from Google Maps.', google: 'Google Ads can be limited to the exact area you serve, so you only pay for nearby clicks.' } },
       { id: 'visitors', label: 'Visitors and travellers coming to my area', w: { google: 3, meta: 3, seo: 3, local: 4, outreach: 0 },
-        why: { local: 'Travellers check Google Maps while they plan and when they arrive, so your listing is often their first look at you.', meta: 'Travellers decide where to go from what they see, and Meta puts your photos in front of them while they plan.', seo: 'Trip planners research for weeks, and pages that answer their questions put you on the itinerary.', google: 'Travellers search for things to do and places to stay, and ads put you at the top while they\'re deciding.' },
+        why: { local: 'Travellers check Google Maps while they plan and when they arrive, so your listing is often their first look at you.', meta: 'Travellers pick where to go from what they see, and Facebook and Instagram put your photos in front of them while they plan.', seo: 'People plan trips for weeks, and pages that answer their questions put you on the itinerary.' },
         skip: { outreach: 'Your customers are travellers you can\'t list in advance, so there\'s no one to reach out to.' } },
-      { id: 'national_people', label: 'People across Canada or beyond (online or by delivery)', w: { google: 2, meta: 3, seo: 3, local: 0, outreach: 0 },
-        why: { meta: 'Your buyers are spread out, and Meta lets you reach them anywhere without a storefront.', seo: 'Your market isn\'t tied to one town, so every page that ranks can bring in buyers from across the country.' },
-        skip: { local: 'You don\'t sell to one local area, so local search won\'t bring you much.' } },
-      { id: 'national_biz', label: 'Businesses across Canada or beyond', w: { google: 2, meta: 1, seo: 3, local: 0, outreach: 4 },
-        why: { outreach: 'You sell to businesses across a wide area, which means a defined list of companies worth going after one by one.', seo: 'Business buyers research before they buy, and content that answers their questions keeps you on the shortlist.' },
-        skip: { local: 'You don\'t sell to one local area, so local search won\'t bring you much.' } },
+      { id: 'anywhere', label: 'Anywhere. I ship, or work remotely', w: { google: 2, meta: 3, seo: 4, local: 0, outreach: 3 },
+        why: { seo: 'You can sell anywhere, so every page that shows up on Google can bring in customers from across the country.', meta: 'Your customers are spread out, and Facebook and Instagram can reach them wherever they are.' },
+        skip: { local: 'You don\'t rely on customers close by, so Google Maps won\'t bring you much.' } },
     ],
   },
   {
-    id: 'search', q: 'When a new customer first gets in touch, what do they usually say?', hint: 'Pick the one you hear most.',
+    id: 'kind', q: 'Which sounds most like what you sell?',
     options: [
-      { id: 'google', label: '"I need this done. Can you help, and how soon?"', w: { google: 4, meta: 0, seo: 2, local: 4, outreach: 0 },
-        why: { google: 'Your customers arrive with a job that needs doing, which is exactly when people search Google. Ads put you at the top of that search the day you launch.', local: 'People with a job that needs doing search Google Maps for someone nearby, and the map shows up ahead of the regular results.', seo: 'People with a job to do search for it, and ranking for those searches brings them in without paying per click.' },
-        skip: { meta: 'Your customers arrive with a job to do. Social ads reach people before they need you, not when they\'re ready to hire.' } },
-      { id: 'research', label: '"I\'ve been comparing a few options and have some questions."', w: { google: 1, meta: 1, seo: 4, local: 1, outreach: 1 },
-        why: { seo: 'Your customers compare before they reach out. Pages that answer their questions put you in front of them while they decide, in Google and in AI answers.' } },
-      { id: 'impulse', label: '"I saw your post or ad and loved it."', w: { google: 0, meta: 4, seo: 0, local: 0, outreach: 2 },
-        why: { meta: 'Your customers buy when they see something they like. Meta ads put it in front of them.' },
-        skip: { google: 'Your customers find you by seeing you, not by searching, so there\'s little for search ads to catch.', seo: 'Your customers find you by seeing you, not by searching, so there\'s little to rank for.', local: 'Your customers find you by seeing you, not by searching, so a Maps listing has little to catch.' } },
-      { id: 'referral', label: '"So-and-so said I should call you."', w: { google: 0, meta: 1, seo: 1, local: 2, outreach: 4 },
-        why: { outreach: 'Your business runs on relationships. Outreach builds them on purpose, with a list you choose, instead of waiting for referrals.' },
-        skip: { google: 'Your customers come through people they know, not searches, so search ads have less to catch.' } },
+      { id: 'problem', label: 'Something people need when a problem comes up (a leak, a toothache, a legal issue)', w: { google: 5, meta: 0, seo: 2, local: 4, outreach: 0 },
+        why: { google: 'People with a problem search Google for someone to fix it. Google Ads puts you at the top of that search from the day you start.', local: 'People with a problem pick from the map and call. Reviews and a complete listing decide who gets that call.' },
+        skip: { meta: 'People look for what you sell when a problem comes up. Facebook and Instagram reach them before that, when they aren\'t looking.', outreach: 'You can\'t predict who will have the problem next, so there\'s no one to reach out to ahead of time.' } },
+      { id: 'planned', label: 'Something people plan for and compare (a renovation, new equipment, a wedding venue)', w: { google: 3, meta: 2, seo: 4, local: 2, outreach: 2 },
+        why: { seo: 'Your customers compare before they buy. Pages that answer their questions put you in front of them while they decide, on Google and in AI answers.', google: 'People planning a purchase search and compare, and ads put you in that comparison.' } },
+      { id: 'want', label: 'Something people want but don\'t need (a treat, a hobby, a gift)', w: { google: 0, meta: 5, seo: 1, local: 1, outreach: 0 },
+        why: { meta: 'People don\'t go looking for a treat. They buy when they see one, and Facebook and Instagram are where they see it.' },
+        skip: { google: 'Few people search for something they don\'t need, so there\'s little for Google Ads to catch.', outreach: 'A want is an impulse buy, and one-by-one outreach is too slow for that.' } },
+      { id: 'new', label: 'Something new that most people don\'t know exists yet', w: { google: 0, meta: 3, seo: 1, local: 0, outreach: 4 },
+        why: { outreach: 'Nobody searches for something they haven\'t heard of, so you have to go to them. Outreach does that.', meta: 'Nobody searches for something they haven\'t heard of. Facebook and Instagram ads introduce it to the right people.' },
+        skip: { google: 'People can\'t search for something they don\'t know exists, so there\'s little for Google Ads to catch.', seo: 'People can\'t search for something they don\'t know exists, so there\'s little to show up for yet.', local: 'People can\'t search for something they don\'t know exists, so a Maps listing has little to catch.' } },
     ],
   },
   {
-    id: 'urgency', q: 'How urgent is the need when a customer reaches out?',
+    id: 'source', q: 'Where do most of your customers come from today?', hint: 'A rough guess is fine.',
     options: [
-      { id: 'now', label: 'Urgent. They need it today or this week', w: { google: 4, meta: 0, seo: 1, local: 4, outreach: 0 },
-        why: { google: 'Urgent buyers call one of the first businesses they see. Ads put you first.', local: 'Urgent buyers pick from the map and call. Reviews and a complete profile decide who gets that call.' },
-        skip: { meta: 'Urgent buyers search, they don\'t scroll. Social ads reach people before they need you, not while they do.', outreach: 'Urgent buyers can\'t wait for a sales conversation to start.' } },
-      { id: 'planned', label: 'Planned. They decide within a month or two', w: { google: 3, meta: 2, seo: 2, local: 2, outreach: 1 },
-        why: { google: 'Buyers on a one-to-two-month timeline are searching and comparing now, which is when ads catch them.' } },
-      { id: 'long', label: 'A long decision. Months, with several people involved', w: { google: 1, meta: 1, seo: 3, local: 0, outreach: 4 },
-        why: { outreach: 'Long decisions with several people involved are won by building relationships early, before anyone asks for quotes.', seo: 'Long buying cycles mean lots of research, and that research is where good content earns trust.' },
-        skip: { local: 'Long, considered decisions aren\'t made from a map listing.' } },
-      { id: 'want', label: 'No rush. It\'s a want, not a need', w: { google: 0, meta: 4, seo: 1, local: 1, outreach: 0 },
-        why: { meta: 'When buying is optional, the business that shows up at the right moment with the right picture wins. That\'s what Meta does.' },
-        skip: { google: 'Few people urgently search for a want, so there\'s less for search ads to catch.' } },
+      { id: 'referral', label: 'Word of mouth and referrals', w: { google: 1, meta: 1, seo: 1, local: 2, outreach: 2 },
+        why: { outreach: 'Your business already grows through relationships. Outreach builds new ones on purpose, with people you choose.', local: 'People who hear about you from a friend look you up before they call. Your reviews are what they find.' } },
+      { id: 'google', label: 'They find us on Google', w: { google: 2, meta: 0, seo: 2, local: 2, outreach: 0 },
+        why: { google: 'Customers already find you on Google, so you know people search for what you sell. Ads get you more of those searches.', seo: 'Customers already find you on Google, so you know people search for what you sell. SEO gets you in front of more of them.', local: 'Customers already find you on Google, which shows people search for what you do nearby.' } },
+      { id: 'social', label: 'Social media', w: { google: 0, meta: 2, seo: 0, local: 0, outreach: 0 },
+        why: { meta: 'Social media already brings you customers for free. Paying to reach more of the same people is the natural next step.' } },
+      { id: 'passby', label: 'They walk or drive past', w: { google: 0, meta: 1, seo: 0, local: 2, outreach: 0 },
+        why: { local: 'People who pass your location also look nearby on their phones, and Google Maps is where they look.' } },
+      { id: 'sales', label: 'We go out and find them', w: { google: 0, meta: 0, seo: 1, local: 0, outreach: 2 },
+        why: { outreach: 'You already win customers by going after them. A proper outreach system makes that steady instead of occasional.' } },
+      { id: 'unsure', label: 'Not sure', w: { google: 1, meta: 1, seo: 1, local: 1, outreach: 1 } },
     ],
   },
   {
-    id: 'visual', q: 'Would a photo or short video of your work make someone want to buy?',
+    id: 'list', q: 'Could you write a list of customers you\'d love to have?',
     options: [
-      { id: 'very', label: 'Yes. It looks great on camera (food, travel, homes, products, before-and-afters)', w: { google: 1, meta: 4, seo: 1, local: 2, outreach: 0 },
-        why: { meta: 'Your work looks great on camera, and Facebook and Instagram are built around photos and video.' } },
-      { id: 'some', label: 'A little. Photos help, but people need it explained', w: { google: 2, meta: 2, seo: 2, local: 1, outreach: 1 } },
-      { id: 'no', label: 'Not really. People buy our know-how, not something they can see', w: { google: 2, meta: 0, seo: 3, local: 1, outreach: 2 },
-        why: { seo: 'Know-how is hard to show in a photo but easy to prove in writing. Pages that answer real questions do the selling.' },
-        skip: { meta: 'Your work is hard to show in a photo, which makes social ads harder to win with.' } },
+      { id: 'named', label: 'Yes, I could name them', w: { google: 1, meta: 0, seo: 1, local: 0, outreach: 5 },
+        why: { outreach: 'You can name the customers you want. When you know exactly who they are, the direct route is to contact them.' },
+        skip: { meta: 'You want specific customers you can name, and ads to a broad audience are a roundabout way to reach them.' } },
+      { id: 'type', label: 'I know the type, but not the names', w: { google: 2, meta: 2, seo: 2, local: 1, outreach: 3 },
+        why: { outreach: 'You know the type of customer you want, and a list of them can be researched and built.' } },
+      { id: 'anyone', label: 'No. It could be almost anyone', w: { google: 3, meta: 3, seo: 2, local: 3, outreach: 0 },
+        why: { google: 'Your next customer could be anyone, so the way to catch them is to be there when they search.', meta: 'Your next customer could be almost anyone, and Facebook and Instagram are built to reach a lot of people at once.', local: 'Your next customer could be anyone nearby, so you need to be easy to find when they look.' },
+        skip: { outreach: 'Your next customer could be almost anyone, so there\'s no list to reach out to.' } },
+    ],
+  },
+  {
+    id: 'photos', q: 'Do you have photos or videos of your work you\'d be proud to show off?',
+    options: [
+      { id: 'lots', label: 'Yes, lots', w: { google: 1, meta: 4, seo: 1, local: 2, outreach: 1 },
+        why: { meta: 'You have plenty of photos and videos worth showing off, and that\'s what Facebook and Instagram ads are made of.', local: 'Good photos make a Google Maps listing stand out from the ones around it.' } },
+      { id: 'few', label: 'A few', w: { google: 2, meta: 2, seo: 2, local: 1, outreach: 1 } },
+      { id: 'none', label: 'Not really. There isn\'t much to see', w: { google: 2, meta: 0, seo: 3, local: 1, outreach: 2 },
+        why: { seo: 'What you do is hard to show in a photo but easy to explain in writing, and well-explained pages are what SEO runs on.' },
+        skip: { meta: 'There isn\'t much to photograph in what you do, and Facebook and Instagram ads depend on pictures.' } },
     ],
   },
   {
@@ -100,37 +122,21 @@ export const QUESTIONS = [
     ],
   },
   {
-    id: 'capacity', q: 'How many new customers could you take on in a month?',
-    options: [
-      { id: 'few', label: 'A few. Each one is a big deal', w: { google: 1, meta: 0, seo: 2, local: 1, outreach: 4 },
-        why: { outreach: 'You only need a few new customers, so you can pick exactly which ones and go after them.' },
-        skip: { meta: 'You only need a few customers, and social ads work best when you can take on many.' } },
-      { id: '5_20', label: '5 to 20', w: { google: 3, meta: 2, seo: 2, local: 3, outreach: 2 },
-        why: { google: 'Ads can be turned up or down to match the number of customers you can handle.', local: 'A steady handful of local customers a month is the kind of flow a strong local listing is built for.' } },
-      { id: '20plus', label: '20 or more', w: { google: 3, meta: 3, seo: 3, local: 3, outreach: 0 },
-        why: { meta: 'You can take on lots of customers, and Meta can reach lots of people.', google: 'Ads can grow with you as you add capacity.', seo: 'At that volume, people who find you without a paid click keep your cost per customer down.', local: 'With lots of nearby customers a month, your Maps listing has a lot of calls to win.' },
-        skip: { outreach: 'You need more customers than one-by-one outreach can bring in.' } },
-      { id: 'unlimited', label: 'As many as want to buy (online store, or no real limit)', w: { google: 3, meta: 4, seo: 3, local: 0, outreach: 0 },
-        why: { meta: 'With no limit on what you can sell, you can keep raising the budget on ads that work.', google: 'With no ceiling on sales, ads that pay back can keep growing.', seo: 'With no ceiling on sales, every page that ranks keeps adding customers without a cost per click.' },
-        skip: { outreach: 'You need more customers than one-by-one outreach can bring in.' } },
-    ],
-  },
-  {
-    id: 'timing', q: 'How soon do you need new business coming in?',
+    id: 'timing', q: 'How soon do you need more customers?',
     options: [
       { id: 'now', label: 'This month. We have room now', w: { google: 4, meta: 3, seo: 0, local: 1, outreach: 3 },
         why: { google: 'You need business now. Ads start showing the day they go live, while SEO takes months.', meta: 'Meta ads can start bringing in leads within days of launch.', outreach: 'Outreach starts conversations this week, not next quarter.' },
         skip: { seo: 'You need business this month, and SEO takes months to pay off.' } },
       { id: '3mo', label: 'Within three months', w: { google: 3, meta: 3, seo: 1, local: 3, outreach: 3 },
         why: { google: 'Three months gives ads time to launch, learn and improve.', meta: 'Three months gives ads time to launch, learn and improve.', local: 'Fixing a local listing is a short list of jobs, which fits a three-month window.', outreach: 'Three months is enough to build a list, start conversations and book meetings.' } },
-      { id: 'long', label: 'We\'re building for the next year or two', w: { google: 1, meta: 1, seo: 4, local: 3, outreach: 1 },
+      { id: 'long', label: 'We\'re building for the next year or two', w: { google: 1, meta: 1, seo: 4, local: 3, outreach: 2 },
         why: { seo: 'You\'re building for the long run, and SEO builds on itself. Pages that rank keep bringing people in without paying per click.', local: 'Reviews and a strong listing keep paying off year after year.' } },
     ],
   },
   {
-    id: 'budget', q: 'What can you spend on marketing each month, all in?', hint: 'Everything together: ads, agency or freelancer fees, and tools.',
+    id: 'budget', q: 'What can you spend each month to get more customers, all in?', hint: 'Everything together: ads, agency or freelancer fees, and tools.',
     options: [
-      { id: 'u1k', label: 'Under $1,000', w: { google: 0, meta: 1, seo: 2, local: 4, outreach: 2 },
+      { id: 'u1k', label: 'Under $1,000', w: { google: 0, meta: 0, seo: 2, local: 4, outreach: 2 },
         why: { local: 'Your Google Business Profile is free to run and brings in calls when it\'s set up well, which suits a tight budget.' },
         skip: { google: 'With under $1,000 a month all in, there\'s little left for clicks once the ads are set up and managed.' } },
       { id: '1k_2500', label: '$1,000 to $2,500', w: { google: 1, meta: 2, seo: 3, local: 4, outreach: 3 },
@@ -145,28 +151,43 @@ export const QUESTIONS = [
     ],
   },
   {
-    id: 'website', q: 'How does your website do today?',
+    id: 'reviews', q: 'Roughly how many Google reviews does your business have?', only: { where: ['local', 'visitors'] },
     options: [
-      { id: 'none', label: 'We don\'t have one, or we\'re embarrassed by it', w: {} },
-      { id: 'quiet', label: 'It looks fine, but it rarely brings in leads', w: {} },
-      { id: 'untracked', label: 'It brings in leads, but we can\'t tell where they come from', w: {} },
-      { id: 'tracked', label: 'It brings in leads, and we know where each one comes from', w: {} },
+      { id: 'few', label: 'None, or just a handful', w: { google: 0, local: 4 },
+        why: { local: 'You have very few Google reviews. That\'s the quickest thing to fix, and it costs nothing but asking.' },
+        skip: { google: 'With very few Google reviews, people who click an ad and look you up have little to go on. Build reviews first.' } },
+      { id: 'mid', label: '10 to 50', w: { google: 2, local: 3 },
+        why: { local: 'You have a base of reviews to build on, and a steady habit of asking will move you up the map.' } },
+      { id: 'many', label: 'More than 50', w: { google: 4, local: 1 },
+        why: { google: 'You already have plenty of Google reviews, so people who click an ad and look you up will like what they find.' } },
+      { id: 'unsure', label: 'Not sure', w: { google: 1, local: 3 },
+        why: { local: 'You\'re not sure how many Google reviews you have, which usually means the listing hasn\'t had much attention yet.' } },
     ],
   },
   {
-    id: 'followup', q: 'When a new lead comes in, how fast does someone get back to them?',
+    id: 'website', q: 'Does your website bring in calls or enquiries?',
     options: [
-      { id: 'hour', label: 'Within the hour', w: {} },
-      { id: 'day', label: 'Same day', w: {} },
-      { id: 'days', label: 'Within a few days', w: {} },
-      { id: 'depends', label: 'Honestly, it depends who\'s around', w: {} },
+      { id: 'regular', label: 'Yes, regularly', w: {} },
+      { id: 'sometimes', label: 'Now and then', w: {} },
+      { id: 'rarely', label: 'Rarely or never', w: {} },
+      { id: 'none', label: 'We don\'t have a website', w: {} },
     ],
   },
 ];
 
-// Hard rules applied after the points. Each returns a cap and the reason shown to the visitor.
+// Is this question shown, given the answers so far?
+export function applies(q, answers) {
+  if (!q.only) return true;
+  return Object.keys(q.only).every(k => q.only[k].includes(answers[k]));
+}
+
+// Hard rules applied after the points.
 export const RULES = [
-  { channel: 'local', when: a => a.who === 'national_people' || a.who === 'national_biz', cap: 10 },
+  { channel: 'local', when: a => a.where === 'anywhere', cap: 10 },
+  { channel: 'outreach', when: a => a.list === 'anyone', cap: 20 },
+  // Nobody scrolls Facebook looking for an emergency fix; nobody searches Google for a treat or something unheard of.
+  { channel: 'meta', when: a => a.kind === 'problem', cap: 40 },
+  { channel: 'google', when: a => a.kind === 'want' || a.kind === 'new', cap: 35 },
 ];
 
 export function fitLabel(fit) {
@@ -176,17 +197,18 @@ export function fitLabel(fit) {
   return 'Weak fit';
 }
 
-// Validates answers ({questionId: optionId}). Returns null if anything is missing or unknown.
+// Validates answers ({questionId: optionId}). Returns null if a question that applies is missing or unknown.
+// Answers to questions that don't apply are dropped.
 export function cleanAnswers(raw) {
   const out = {};
   for (const q of QUESTIONS) {
+    if (!applies(q, out)) continue;
     const v = raw && raw[q.id];
     if (!q.options.some(o => o.id === v)) return null;
     out[q.id] = v;
   }
   return out;
 }
-
 export function score(answers) {
   const raw = {}, max = {};
   for (const k of CHANNEL_KEYS) { raw[k] = 0; max[k] = 0; }
@@ -194,6 +216,7 @@ export function score(answers) {
   for (const k of CHANNEL_KEYS) { why[k] = []; skip[k] = []; }
 
   for (const q of QUESTIONS) {
+    if (!applies(q, answers)) continue;
     const opt = q.options.find(o => o.id === answers[q.id]);
     for (const k of CHANNEL_KEYS) {
       const ceiling = Math.max(0, ...q.options.map(o => o.w[k] || 0));
@@ -215,9 +238,8 @@ export function score(answers) {
 
   const flags = [];
   const top = ranked[0];
-  if (answers.website === 'none' || answers.website === 'quiet') flags.push('foundation');
-  if (answers.website === 'untracked') flags.push('tracking');
-  if ((answers.followup === 'days' || answers.followup === 'depends') && top !== 'seo') flags.push('speed');
+  if (answers.website === 'none') flags.push('nosite');
+  if (answers.website === 'rarely') flags.push('foundation');
   if (answers.budget === 'u1k' && (top === 'google' || top === 'meta')) flags.push('smallbudget');
 
   const hot = ['2500_5k', '5k_10k', '10k'].includes(answers.budget) && (answers.timing === 'now' || answers.timing === '3mo');
