@@ -2,7 +2,7 @@
 
 Quiz funnel lead magnet for Navigator Multimedia at `https://channel.navigator.ca`. A visitor answers 10 questions and learns which of five channels to start with: Google Ads, Facebook and Instagram ads, SEO and AI search, local search, or direct outreach. Email is gated before the result. The result page shows a fit score for all five channels, the reasons from their own answers, a 90-day plan, trade-offs, a runner-up, one channel to hold off on, and the strategy-call CTA.
 
-Same stack and deploy pattern as `redesign-risk-audit` and `ownership-check`: one Cloudflare Worker on the Free plan, D1, Postmark, Workers Builds from GitHub.
+Styled to match the rebuilt navigator.ca (shared kit in `src/pages/brand.js`, same file as in `redesign-risk-audit`; images load from www.navigator.ca/assets). Same stack and deploy pattern as `redesign-risk-audit` and `ownership-check`: one Cloudflare Worker on the Free plan, D1, Postmark, Workers Builds from GitHub.
 
 ## Flow
 
@@ -22,19 +22,19 @@ Questions 1 to 8 give each channel 0 to 5 points per answer. Fit = points / most
 | # | Question | Mostly separates |
 |---|---|---|
 | 1 | Who buys from you? | Local vs national, people vs businesses (local search, outreach) |
-| 2 | What do they do first when they need you? | Search demand vs discovery vs referral |
+| 2 | What do new customers usually say when they first get in touch? | Job to be done (search) vs comparing (research) vs saw it (discovery) vs referral |
 | 3 | How urgent is the need? | Google Ads and local vs Meta and outreach |
-| 4 | Can a photo or video sell it? | Meta |
-| 5 | What is one customer worth? | Outreach at the top end, Meta and local at the bottom |
+| 4 | Would a photo or short video of your work make someone want to buy? | Meta |
+| 5 | What does a typical new customer spend in their first year? (revenue, not profit; six tiers from under $250 to $100k+) | Outreach at the top end, Meta and local at the bottom |
 | 6 | How many new customers a month? | Outreach (few) vs Meta and ads (many) |
 | 7 | How soon do you need business? | Paid vs SEO |
-| 8 | Monthly budget including ad spend | Paid ads need room to learn |
+| 8 | Monthly marketing budget, all in (ads, agency fees, tools) | Paid ads need room to learn after management costs |
 | 9 | How does the website do today? | Flags only: fix the foundation, or set up tracking |
 | 10 | How fast is lead follow-up? | Flag only: speed up follow-up |
 
 Hard rule: national sellers (question 1) get local search capped at 10%. Visitors and travellers keep local search in play.
 
-Hot lead = budget of $3,000+ a month and results wanted within three months. The alert subject starts with "Hot lead:".
+Hot lead = $2,500+ a month all in, and results wanted within three months. The alert subject starts with "Hot lead:".
 
 Tests cover seven personas (plumber, cafe, B2B manufacturer, online store, national professional services, local B2B service, small local trade), every one of the ~13,000 answer combinations, that every channel can win, flags, and the brand copy rules (no em dashes, no banned words, no unqualified "best"). Tune weights in `QUESTIONS` after the first 50 real results; run `npm test` after any change.
 
