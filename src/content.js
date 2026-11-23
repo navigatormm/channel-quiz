@@ -89,8 +89,17 @@ export const FLAGS = {
   foundation: ['Fix the website before you pay for traffic', 'You said your website rarely brings in leads. Almost every channel here sends people to your website, so a site that doesn\'t turn visitors into enquiries wastes what you spend getting them there. Fix it first, or fix it alongside.'],
   tracking: ['Set up lead tracking first', 'You can\'t tell where your leads come from, so you won\'t know whether this channel is working. Track every call and form back to its source before you spend more.'],
   speed: ['Speed up your follow-up', 'You said leads can wait a few days for a reply. People asking for a quote usually ask more than one business. Paying for leads and answering late is how good channels get blamed for bad results.'],
-  smallbudget: ['Keep it narrow', 'With under $1,000 a month, pick one service and one audience and keep the ad spend there. Spread thin, no ad gets enough budget to learn.'],
+  smallbudget: ['Keep it narrow', 'With under $1,000 a month all in, pick one service and one audience and keep the spend there. Spread thin, no ad gets enough budget to learn.'],
 };
 
 export const GENERIC_WHY = 'Your answers about who buys, how they decide and how fast you need results all point here.';
 export const GENERIC_SKIP = 'It scored lowest on your answers. Worth another look as your business changes.';
+
+// Chart art from navigator.ca for each channel (cards on the landing page, hero of the result page).
+export const ART = {
+  google: 'https://www.navigator.ca/assets/brand/chart-ppc-800.webp',
+  meta: 'https://www.navigator.ca/assets/brand/chart-social-800.webp',
+  seo: 'https://www.navigator.ca/assets/brand/chart-beacon-800.webp',
+  local: 'https://www.navigator.ca/assets/brand/chart-okanagan-800.webp',
+  outreach: 'https://www.navigator.ca/assets/brand/chart-email-800.webp',
+};

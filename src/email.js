@@ -27,7 +27,7 @@ export function leadAlert(env, row, r, answers) {
   const lines = [
     `${row.name} <${row.email}>${row.website ? ` (${row.website})` : ''}${row.personal ? ' [personal email]' : ''}`,
     `Result: ${CHANNELS[r.top].name}. Top three: ${top3}.`,
-    r.hot ? 'Hot: budget of $3,000+ a month and wants results within three months.' : '',
+    r.hot ? 'Hot: $2,500+ a month all in, and wants results within three months.' : '',
     r.flags.length ? `Flags: ${r.flags.map(f => FLAGS[f][0]).join('; ')}.` : '',
     '',
     'Answers:',

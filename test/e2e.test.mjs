@@ -5,7 +5,7 @@ import { makeD1, fakeFetch, ANS } from './harness.mjs';
 
 const ENV = () => ({ DB: makeD1(), POSTMARK_TOKEN: 'pm', NOTIFY_TO: 'jessey@navigator.ca', NOTIFY_FROM: 'quiz@navigator.ca', CTA_URL: 'https://book.test', PUBLIC_ORIGIN: 'https://channel.navigator.ca', META_PIXEL_ID: '123', ADMIN_TOKEN: 'secret' });
 const form = obj => { const f = new FormData(); for (const [k, v] of Object.entries(obj)) f.append(k, v); return f; };
-const answers = ANS('local_biz', 'google', 'planned', 'some', '5k_50k', '5_20', '3mo', '3_7k', 'untracked', 'day');
+const answers = ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k', 'untracked', 'day');
 
 test('landing renders the quiz with questions but no weights', async () => {
   const res = await worker.fetch(new Request('https://channel.navigator.ca/'), ENV());

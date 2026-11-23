@@ -1,29 +1,26 @@
 import { CSS } from './css.js';
-import { LOGO } from '../assets/logo.js';
 import { QUESTIONS, CHANNELS } from '../quiz.js';
+import { ART } from '../content.js';
 import { esc, WHATCONVERTS } from '../lib/util.js';
+import { FONTS, ASSET, PRIVACY, route, siteHeader, siteFooter } from './brand.js';
 
 // One reader (a business owner or marketing manager deciding where to spend), one promise (a straight answer on
-// which channel to start with), one action (take the quiz).
+// which channel to start with), one action (take the quiz). Styled to match the rebuilt navigator.ca (brand.js).
 
-const PRIVACY = 'https://www.navigator.ca/privacy-policy/';
-
-export function shell({ title, description = '', body, head = '', tracking = true }) {
+export function shell({ title, description = '', body, head = '', tracking = true, ctaHref = '/#quiz', ctaLabel = 'Take the quiz' }) {
   return `<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>${description ? `<meta name="description" content="${esc(description)}">` : ''}
 <meta property="og:title" content="${esc(title)}">${description ? `<meta property="og:description" content="${esc(description)}">` : ''}
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
-${tracking ? WHATCONVERTS : ''}${head}<style>${CSS}</style></head>
-<body><header class="lp-head"><div class="wrap"><a class="logo" href="https://www.navigator.ca/" aria-label="Navigator Multimedia home">${LOGO}</a><a class="btn-head" href="/#quiz">Take the quiz</a></div></header>
-<main>${body}</main>
-<footer class="lp-foot"><div class="wrap"><div class="row"><span>Navigator Multimedia</span><span>460 Doyle Ave #201, Kelowna, BC V1Y 0C2</span><span>250-862-9868</span><a href="https://www.navigator.ca/">navigator.ca</a><a href="${PRIVACY}" target="_blank" rel="noopener">Privacy policy</a></div></div></footer>
+${FONTS}${tracking ? WHATCONVERTS : ''}${head}<style>${CSS}</style></head>
+<body>${siteHeader({ ctaHref, ctaLabel, ctaAttrs: 'data-start' })}
+<main id="top">${body}</main>
+${siteFooter()}
 </body></html>`;
 }
 
 const BEST = {
   google: 'Best when people search for what you sell and need it soon.',
-  meta: 'Best when what you sell looks good in a photo and people buy on impulse.',
+  meta: 'Best when your work looks great on camera and people buy on impulse.',
   seo: 'Best when buyers research first and you can play the long game.',
   local: 'Best when customers are nearby and find you on Google Maps.',
   outreach: 'Best when a few big customers are worth chasing one by one.',
@@ -37,61 +34,69 @@ const FAQ = [
   ['What happens to my email address?', `We use it to send your result and to follow up once about it. You can unsubscribe any time. <a href="${PRIVACY}" target="_blank" rel="noopener">Read our privacy policy</a>.`],
 ];
 
-// Only what the browser needs: question text and option labels. Weights stay on the server.
-const PUBLIC_QUESTIONS = QUESTIONS.map(q => ({ id: q.id, q: q.q, options: q.options.map(o => ({ id: o.id, label: o.label })) }));
+// Only what the browser needs: question text, hints and option labels. Weights stay on the server.
+const PUBLIC_QUESTIONS = QUESTIONS.map(q => ({ id: q.id, q: q.q, hint: q.hint || '', options: q.options.map(o => ({ id: o.id, label: o.label })) }));
 
 export function landingPage({ error = '', values = {}, answers = null, preview = false } = {}) {
   const state = { questions: PUBLIC_QUESTIONS, error, values: { name: values.name || '', email: values.email || '', website: values.website || '' }, answers, preview };
   const body = `
-<section class="hero" id="quiz"><div class="wrap">
-  <div class="copy">
-    <p class="eyebrow">Free 2-minute quiz</p>
-    <h1>Which Marketing Channel Should You Start With? <span class="since">Since 1993</span></h1>
-    <p class="sub">Answer 10 quick questions about your customers, your budget and your timing. Get a straight answer on where to put your next marketing dollar, and what to skip.</p>
-    <p class="body">Google Ads, Facebook and Instagram ads, SEO and AI search, local search or direct outreach. Each one works for some businesses and burns money for others. The difference is how your customers buy.</p>
-    <ul class="trust"><li>10 questions</li><li>About 2 minutes</li><li>Result on screen and by email</li></ul>
+<section class="hero-sub on-dark" id="quiz">
+  <div class="hero-sub-bg" aria-hidden="true"><img src="${ASSET}hero-ship-wide.webp" alt="" width="2400" height="1029" fetchpriority="high"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Free 2-minute quiz</p>
+      <h1>Which Marketing Channel Should You Start With?</h1>
+      <p class="lede">Answer 10 quick questions about your customers, your budget and your timing. Get a straight answer on where to put your next marketing dollar, and what to skip.</p>
+      <ul class="trust"><li class="chip">10 questions</li><li class="chip">About 2 minutes</li><li class="chip">Result on screen and by email</li><li class="chip">Since 1993</li></ul>
+    </div>
+    <div class="qcard" id="qcard" aria-live="polite">
+      <p class="card-k">Five channels, one answer</p>
+      <p class="ct" style="margin-top:.5rem">Which one fits your business?</p>
+      <p class="cs">The quiz compares each channel against how your customers buy:</p>
+      <ul class="chans">${Object.values(CHANNELS).map(c => `<li>${esc(c.name)}</li>`).join('')}</ul>
+      <button type="button" class="btn btn--block" data-start>Start the quiz</button>
+      <noscript><p class="err">The quiz needs JavaScript. Call us at 250 862 9868 and we'll walk through it with you.</p></noscript>
+    </div>
   </div>
-  <div class="qcard" id="qcard" aria-live="polite">
-    <p class="ct">Which channel fits your business?</p>
-    <p class="cs">The quiz compares five channels against how your customers buy:</p>
-    <ul class="chips">${Object.values(CHANNELS).map(c => `<li>${esc(c.name)}</li>`).join('')}</ul>
-    <button type="button" class="btn-y" data-start>Start the quiz</button>
-    <noscript><p class="err">The quiz needs JavaScript. Call us at 250-862-9868 and we'll walk through it with you.</p></noscript>
+</section>
+
+<section class="section"><div class="wrap">
+  <div class="head-split">
+    <div>${route()}<h2>Five Channels. None Works for Everyone.</h2></div>
+    <p class="lede">Google Ads, Facebook and Instagram ads, SEO and AI search, local search and direct outreach all work. Each one also burns money for businesses it doesn't suit. The difference is how your customers buy.</p>
   </div>
+  <ul class="chan">${Object.entries(CHANNELS).map(([k, c]) => `<li><img src="${ART[k]}" alt="" width="800" height="531" loading="lazy"><h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p><p class="best">${esc(BEST[k])}</p></li>`).join('')}</ul>
 </div></section>
 
-<section class="band"><div class="wrap">
-  <div class="sec-head"><h2>Five Channels, One Honest Answer</h2><p>Every channel below works. None of them works for everyone.</p></div>
-  <ul class="chan">${Object.entries(CHANNELS).map(([k, c]) => `<li><h3>${esc(c.name)}</h3><p>${esc(c.blurb)}</p><p class="best">${esc(BEST[k])}</p></li>`).join('')}</ul>
-</div></section>
-
-<section class="band mist honest"><div class="wrap">
-  <div class="copy">
-    <p class="eyebrow">Why we built it</p>
-    <h2 class="h">Ask a Vendor and You'll Hear What They Sell</h2>
-    <p>An ad agency recommends ads. An SEO agency recommends SEO. That doesn't make either one right for you.</p>
-    <p>We run all five channels for clients, so the quiz has no reason to favour one. It looks at how your customers buy, what each one is worth and how fast you need results, then tells you where to start. It also tells you what to hold off on.</p>
+<section class="section section--paper"><div class="wrap">
+  <div class="head-split">
+    <div>${route()}<p class="eyebrow">Why we built it</p><h2>Ask a Vendor and You'll Hear What They Sell</h2></div>
+    <div class="lede"><p>An ad agency recommends ads. An SEO agency recommends SEO. That doesn't make either one right for you.</p><p style="margin-top:1rem">We run all five channels for clients, so the quiz has no reason to favour one. It tells you where to start, and what to hold off on.</p></div>
   </div>
-  <ul class="looks">
+  <div class="card looks-card"><p class="card-k">What the quiz looks at</p>
+  <ul class="checks" style="margin-top:.6rem">
     <li>Who your customers are and where they are</li>
-    <li>What they do when they need you</li>
-    <li>How urgent and how visual your offer is</li>
-    <li>What a customer is worth and how many you can take on</li>
-    <li>Your budget and how soon you need results</li>
+    <li>What they say when they first get in touch</li>
+    <li>How urgent your offer is, and how it looks on camera</li>
+    <li>What a customer spends and how many you can take on</li>
+    <li>Your all-in budget and how soon you need results</li>
     <li>Whether your website and follow-up are ready for more leads</li>
-  </ul>
+  </ul></div>
 </div></section>
 
-<section class="band since-band"><div class="wrap">
-  <div><h2 class="h">30+ Years of Watching What Works</h2>
-  <p>Navigator Multimedia has built and marketed businesses across Canada since 1993. The quiz is the same first question we ask on every strategy call: how do your customers actually buy?</p></div>
-  <div class="stats"><div><b>1993</b><span>Founded</span></div><div><b>30+</b><span>Years</span></div></div>
-</div></section>
+<section class="section" style="padding-top:0"><div class="wrap"><div class="band-dark on-dark">
+  <div class="band-dark-bg" aria-hidden="true"><img src="${ASSET}statband-chart.webp" alt="" width="2480" height="658" loading="lazy"></div>
+  <div class="since-band">
+    <div>${route()}<h2>30+ Years of Watching What Works</h2>
+    <p>Navigator Multimedia has built and marketed businesses across Canada since 1993. The quiz asks the same first question we ask on every strategy call: how do your customers actually buy?</p></div>
+    <div class="stats"><div><strong>1993</strong><span>Founded</span></div><div><strong>30+</strong><span>Years</span></div></div>
+  </div>
+</div></div></section>
 
-<section class="band faq"><div class="wrap">
-  <div class="sec-head"><h2>Questions</h2></div>
-  <div class="list">${FAQ.map(([q, a]) => `<details><summary><span>${esc(q)}</span></summary><div class="a">${a}</div></details>`).join('')}</div>
-  <p style="margin-top:28px"><a class="btn-y inline" href="#quiz" data-start>Take the quiz</a></p>
+<section class="section" style="padding-top:0"><div class="wrap">
+  <div class="section-head">${route()}<h2>Questions</h2></div>
+  <div class="faq">${FAQ.map(([q, a]) => `<details class="faq-item"><summary>${esc(q)}</summary><div class="faq-a">${a}</div></details>`).join('')}</div>
+  <div class="ctas"><a class="btn" href="#quiz" data-start>Take the quiz</a></div>
 </div></section>
 
 <script>window.__CQ=${JSON.stringify(state).replace(/</g, '\\u003c')};</script>
@@ -117,9 +122,9 @@ var utm={};try{var sp=new URLSearchParams(location.search);['utm_source','utm_me
 var started=false;
 function start(){if(!started){started=true;ev('start');if(window.fbq)try{fbq('trackCustom','QuizStart')}catch(e){}}idx=0;showQ();card.scrollIntoView({behavior:'smooth',block:'start'})}
 function showQ(){var q=Q[idx],pct=Math.round(idx/N*100);
-card.innerHTML='<div class="qtop"><button type="button" class="back"'+(idx?'':' hidden')+'>&larr; Back</button><span>Question '+(idx+1)+' of '+N+'</span></div>'+
-'<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="'+N+'" aria-valuenow="'+idx+'"><span style="width:'+pct+'%"></span></div>'+
-'<h3 tabindex="-1">'+esc(q.q)+'</h3><div class="opts">'+q.options.map(function(o){return '<button type="button" class="opt'+(answers[q.id]===o.id?' sel':'')+'" data-o="'+esc(o.id)+'">'+esc(o.label)+'</button>'}).join('')+'</div>';
+card.innerHTML='<div class="qtop"><button type="button" class="back"'+(idx?'':' hidden')+'>&larr; Back</button><span class="card-k">Question '+(idx+1)+' of '+N+'</span></div>'+
+'<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="'+N+'" aria-valuenow="'+idx+'"><span style="width:'+Math.max(4,pct)+'%"></span></div>'+
+'<h3 tabindex="-1">'+esc(q.q)+'</h3>'+(q.hint?'<p class="cs">'+esc(q.hint)+'</p>':'')+'<div class="opts">'+q.options.map(function(o){return '<button type="button" class="opt'+(answers[q.id]===o.id?' sel':'')+'" data-o="'+esc(o.id)+'">'+esc(o.label)+'</button>'}).join('')+'</div>';
 card.querySelector('h3').focus({preventScroll:true});
 card.querySelector('.back').onclick=function(){idx--;showQ()};
 Array.prototype.forEach.call(card.querySelectorAll('.opt'),function(b){b.onclick=function(){answers[q.id]=b.getAttribute('data-o');b.classList.add('sel');ev('q'+(idx+1));setTimeout(function(){idx++;if(idx>=N){gate()}else{showQ()}},160)}})}
@@ -129,12 +134,12 @@ card.innerHTML='<div class="qtop"><button type="button" class="back">&larr; Back
 '<h3 tabindex="-1">Where should we send your result?</h3><p class="cs">You\\'ll see it on the next screen, and we\\'ll email you a copy to keep.</p>'+
 (err?'<p class="err" role="alert">'+esc(err)+'</p>':'')+
 '<form method="post" action="/api/submit" novalidate>'+
-'<label for="cq-name">First name</label><input id="cq-name" name="name" autocomplete="given-name" required maxlength="80" value="'+esc(v.name)+'">'+
-'<label for="cq-email">Work email</label><input id="cq-email" name="email" type="email" autocomplete="email" required maxlength="160" value="'+esc(v.email)+'">'+
-'<label for="cq-web">Your website <span class="opt-l">(optional)</span></label><input id="cq-web" name="website" autocomplete="url" inputmode="url" maxlength="200" placeholder="example.com" value="'+esc(v.website)+'">'+
+'<div class="field"><label for="cq-name">First name</label><input id="cq-name" name="name" autocomplete="given-name" required maxlength="80" value="'+esc(v.name)+'"></div>'+
+'<div class="field"><label for="cq-email">Work email</label><input id="cq-email" name="email" type="email" autocomplete="email" required maxlength="160" value="'+esc(v.email)+'"></div>'+
+'<div class="field"><label for="cq-web">Your website <span class="opt-l">(optional)</span></label><input id="cq-web" name="website" autocomplete="url" inputmode="url" maxlength="200" placeholder="example.com" value="'+esc(v.website)+'"></div>'+
 '<div class="hp" aria-hidden="true"><label for="cq-hp">Leave blank</label><input id="cq-hp" name="company_url" tabindex="-1" autocomplete="off"></div>'+
 '<input type="hidden" name="answers" value="'+esc(JSON.stringify(answers))+'"><input type="hidden" name="utm" value="'+esc(JSON.stringify(utm))+'"><input type="hidden" name="ref" value="'+esc(document.referrer.slice(0,300))+'"><input type="hidden" name="sid" value="'+esc(sid)+'">'+
-'<button type="submit" class="btn-y">Show my result</button>'+
+'<button type="submit" class="btn btn--block">Show my result</button>'+
 '<p class="fine">By getting your result, you agree that Navigator Multimedia can email you your result and follow up once about it. Unsubscribe any time. <a href="'+PRIVACY+'" target="_blank" rel="noopener">Privacy policy</a></p></form>';
 card.querySelector('h3').focus({preventScroll:true});
 card.querySelector('.back').onclick=function(){idx=N-1;showQ()};
@@ -145,6 +150,5 @@ ev('submit');var btn=f.querySelector('button[type=submit]');
 if(S.preview&&window.__CQ_PREVIEW_SUBMIT){e.preventDefault();window.__CQ_PREVIEW_SUBMIT({name:n,email:m,website:f.website.value},answers);return}
 setTimeout(function(){btn.disabled=true;btn.textContent='Working out your result...'},0)}}
 Array.prototype.forEach.call(document.querySelectorAll('[data-start]'),function(b){b.addEventListener('click',function(e){e.preventDefault();start()})});
-var hb=document.querySelector('.btn-head');if(hb)hb.addEventListener('click',function(e){e.preventDefault();start()});
 if(S.answers&&Object.keys(S.answers).length===N){gate(S.error)}
 })();`;

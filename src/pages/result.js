@@ -14,5 +14,6 @@ export function resultPage(row, env) {
     title: `${RESULT[r.top].headline} | Your Channel Quiz Result`,
     body: resultBody(r, { ctaUrl: env.CTA_URL, resultUrl: `${origin}/r/${row.id}` }),
     head: '<meta name="robots" content="noindex,nofollow">',
+    ctaHref: env.CTA_URL, ctaLabel: 'Book a strategy call',
   });
 }

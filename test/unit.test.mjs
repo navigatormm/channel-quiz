@@ -9,31 +9,31 @@ import { ANS } from './harness.mjs';
 const top = a => score(a).top;
 
 test('personas land on the channel a strategist would pick', () => {
-  assert.equal(top(ANS('local_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k')), 'local', 'plumber');
-  assert.equal(top(ANS('local_people', 'impulse', 'want', 'very', 'u500', '20plus', 'now', 'u1k')), 'meta', 'cafe');
-  assert.equal(top(ANS('national_biz', 'research', 'long', 'no', '50k', 'few', '3mo', '3_7k')), 'outreach', 'B2B manufacturer');
-  assert.equal(top(ANS('national_people', 'impulse', 'want', 'very', 'u500', 'unlimited', 'now', '3_7k')), 'meta', 'online store');
-  assert.equal(top(ANS('national_biz', 'research', 'planned', 'no', '5k_50k', '5_20', 'long', '1_3k')), 'seo', 'national professional services');
-  assert.equal(top(ANS('local_biz', 'google', 'planned', 'some', '5k_50k', '5_20', '3mo', '3_7k')), 'google', 'local B2B service, decent budget');
-  assert.equal(top(ANS('local_people', 'google', 'now', 'some', 'u500', '20plus', 'now', 'u1k')), 'local', 'small local trade on a tight budget');
+  assert.equal(top(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500')), 'local', 'plumber');
+  assert.equal(top(ANS('local_people', 'impulse', 'want', 'very', 'u250', '20plus', 'now', 'u1k')), 'meta', 'cafe');
+  assert.equal(top(ANS('national_biz', 'research', 'long', 'no', '100k', 'few', '3mo', '2500_5k')), 'outreach', 'B2B manufacturer');
+  assert.equal(top(ANS('national_people', 'impulse', 'want', 'very', '250_1k', 'unlimited', 'now', '5k_10k')), 'meta', 'online store');
+  assert.equal(top(ANS('national_biz', 'research', 'planned', 'no', '5k_25k', '5_20', 'long', '1k_2500')), 'seo', 'national professional services');
+  assert.equal(top(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k')), 'google', 'local B2B service, decent budget');
+  assert.equal(top(ANS('local_people', 'google', 'now', 'some', 'u250', '20plus', 'now', 'u1k')), 'local', 'small local trade on a tight budget');
 });
 
 test('visitors keep local search in play; national sellers do not', () => {
-  const v = score(ANS('visitors', 'research', 'want', 'very', '500_5k', '20plus', '3mo', '3_7k'));
+  const v = score(ANS('visitors', 'research', 'want', 'very', '250_1k', '20plus', '3mo', '5k_10k'));
   assert.ok(v.fit.local >= 50, 'tourism operator local fit ' + v.fit.local);
-  const n = score(ANS('national_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k'));
+  const n = score(ANS('national_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500'));
   assert.ok(n.fit.local <= 10);
 });
 
 test('flags', () => {
-  assert.deepEqual(score(ANS('local_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k', 'quiet', 'depends')).flags, ['foundation', 'speed']);
-  assert.deepEqual(score(ANS('national_biz', 'research', 'planned', 'no', '5k_50k', '5_20', 'long', '1_3k', 'untracked', 'days')).flags, ['tracking'], 'no speed flag when SEO wins');
-  assert.ok(score(ANS('local_people', 'impulse', 'want', 'very', 'u500', '20plus', 'now', 'u1k')).flags.includes('smallbudget'));
+  assert.deepEqual(score(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends')).flags, ['foundation', 'speed']);
+  assert.deepEqual(score(ANS('national_biz', 'research', 'planned', 'no', '5k_25k', '5_20', 'long', '1k_2500', 'untracked', 'days')).flags, ['tracking'], 'no speed flag when SEO wins');
+  assert.ok(score(ANS('local_people', 'impulse', 'want', 'very', 'u250', '20plus', 'now', 'u1k')).flags.includes('smallbudget'));
 });
 
-test('hot lead = $3k+ budget and results within three months', () => {
-  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_50k', '5_20', '3mo', '3_7k')).hot, true);
-  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_50k', '5_20', 'long', '7k')).hot, false);
+test('hot lead = $2,500+ all-in budget and results within three months', () => {
+  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', '3mo', '2500_5k')).hot, true);
+  assert.equal(score(ANS('local_biz', 'google', 'planned', 'some', '5k_25k', '5_20', 'long', '10k')).hot, false);
 });
 
 test('every answer combination scores without errors and fits stay 0 to 100', () => {
@@ -57,7 +57,7 @@ test('every channel can win', () => {
 });
 
 test('cleanAnswers rejects missing and unknown answers', () => {
-  const ok = ANS('local_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k');
+  const ok = ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500');
   assert.deepEqual(cleanAnswers(ok), ok);
   assert.equal(cleanAnswers({ ...ok, budget: 'lots' }), null);
   const { timing, ...missing } = ok;
@@ -81,8 +81,8 @@ test('copy: banned words and superlatives stay out', () => {
 
 test('result body renders every channel with flags', () => {
   for (const k of CHANNEL_KEYS) assert.ok(RESULT[k].first90.length === 3 && RESULT[k].watch.length === 3);
-  const r = score(ANS('local_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k', 'quiet', 'depends'));
-  const html = resultBody({ ...r, answers: ANS('local_people', 'google', 'now', 'some', '500_5k', '20plus', '3mo', '1_3k', 'quiet', 'depends'), name: 'Pat <b>' }, { ctaUrl: 'https://x.test/book' });
+  const r = score(ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends'));
+  const html = resultBody({ ...r, answers: ANS('local_people', 'google', 'now', 'some', '1k_5k', '20plus', '3mo', '1k_2500', 'quiet', 'depends'), name: 'Pat <b>' }, { ctaUrl: 'https://x.test/book' });
   assert.match(html, /Start With Local Search/);
   assert.match(html, /Pat, your channel result/);
   assert.ok(!html.includes('<b>,'), 'name escaped');
