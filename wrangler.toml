@@ -1,0 +1,30 @@
+name = "channel-quiz"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "76ff48d2021bc7bc75ea3246bc5743fc"
+workers_dev = true
+
+# Custom domain is attached in the dashboard (Worker > Settings > Domains & Routes): channel.navigator.ca
+
+[vars]
+PUBLIC_ORIGIN = "https://channel.navigator.ca"
+# Strategy-call booking page (HighLevel calendar).
+CTA_URL = "https://api.leadconnectorhq.com/widget/bookings/website-strat"
+# Postmark (secret POSTMARK_TOKEN). navigator.ca is a verified Postmark domain, so any @navigator.ca sender works.
+# NOTIFY_TO gets the lead alert (comma-separate several). SEND_RESULT_EMAIL = "off" stops the email to the quiz taker.
+NOTIFY_TO = "jessey@navigator.ca"
+NOTIFY_FROM = "quiz@navigator.ca"
+# Meta Pixel "Navigator MM" (same pixel as redesign.navigator.ca). Set to "" to switch it off.
+META_PIXEL_ID = "1495860834011066"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "channel-quiz"
+database_id = "REPLACE_WITH_D1_ID"
+
+[observability]
+enabled = true
+
+# Secrets (Worker > Settings > Variables and Secrets):
+#   POSTMARK_TOKEN (same server token as redesign-risk-audit), ADMIN_TOKEN (any long random string)
+#   NOTIFY_WEBHOOK optional (Zapier or HighLevel inbound webhook)
