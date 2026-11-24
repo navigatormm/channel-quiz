@@ -60,6 +60,8 @@ WhatConverts script on every page (account 172577). Meta Pixel `1495860834011066
 
 ## Deploy
 
+Status 2026-11-24: **live** at `https://channel.navigator.ca` (also `https://channel-quiz.navigator-multimedia.workers.dev`). Repo connected through Workers Builds, so a push to `main` deploys. D1 `channel-quiz` created and schema applied. Still to do: `POSTMARK_TOKEN` secret (no emails send until it is set; leads still save), `ADMIN_TOKEN`, WAF rate limit, and one real test submission.
+
 1. Create the empty GitHub repo `navigatormm/channel-quiz` and push this folder to `main`.
 2. Create the D1 database: `npx wrangler d1 create channel-quiz`. (Done 2026-11-24: id is in `wrangler.toml`.) Schema: `npx wrangler d1 execute channel-quiz --remote --file=schema.sql`.
 3. Workers & Pages > Create > Import a repository: `navigatormm/channel-quiz`, branch `main`, root `/`, build command blank, deploy command `npx wrangler deploy`.
