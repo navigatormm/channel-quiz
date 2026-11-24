@@ -43,6 +43,10 @@ Tests cover nine personas, the hard rules, the conditional reviews question, eve
 
 Copy lives in `src/content.js` (result page) and `src/pages/landing.js`. Only the numbers are stored per result; the reasons are rebuilt from the stored answers on display, so copy edits apply to old results too.
 
+## Form fields
+
+First name, work email and phone are required (phone needs 10 to 15 digits); website is optional. Phone was added 2026-11-24: `ALTER TABLE results ADD COLUMN phone TEXT;` (applied to the live database).
+
 ## Marketing opt-in
 
 The email form has a mandatory, unticked checkbox (wording in `CONSENT_TEXT`, `src/lib/util.js`). No tick, no result: the server rejects the submission and stores nothing. Each result row keeps `consent_at`, `consent_text` and `consent_version` as proof of consent. Navigator's name, mailing address, phone and email sit under the button, as CASL asks for in a consent request. If the wording changes, change `CONSENT_VERSION` too. Existing database: `ALTER TABLE results ADD COLUMN consent_at TEXT; ALTER TABLE results ADD COLUMN consent_text TEXT; ALTER TABLE results ADD COLUMN consent_version TEXT;`

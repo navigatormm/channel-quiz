@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS results (
   id TEXT PRIMARY KEY,
   created_at TEXT NOT NULL,
-  name TEXT, email TEXT NOT NULL, website TEXT, personal INTEGER DEFAULT 0,
+  name TEXT, email TEXT NOT NULL, phone TEXT, website TEXT, personal INTEGER DEFAULT 0,
   answers_json TEXT NOT NULL,       -- {questionId: optionId}
   result_json TEXT NOT NULL,        -- score() output: ranked, fit, top, second, last, why, skip, flags, hot
   top TEXT, second TEXT, hot INTEGER DEFAULT 0, flags TEXT,

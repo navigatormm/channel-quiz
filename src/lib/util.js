@@ -13,6 +13,13 @@ export function newId() {
   return Array.from(b, x => x.toString(36).padStart(2, '0')).join('').slice(0, 14);
 }
 
+// Keeps a phone number as typed (digits, spaces, + - ( ) . x), and says whether it has enough digits to call.
+export function cleanPhone(s) {
+  const v = String(s || '').replace(/[^\d+()\-.\sx]/gi, '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  const digits = v.replace(/\D/g, '').length;
+  return digits >= 10 && digits <= 15 ? v : '';
+}
+
 export function cleanWebsite(s) {
   const v = String(s || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
   return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(v) ? v : '';

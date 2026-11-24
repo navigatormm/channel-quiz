@@ -26,6 +26,7 @@ export function leadAlert(env, row, r, answers) {
   const top3 = r.ranked.slice(0, 3).map(k => `${CHANNELS[k].name} ${r.fit[k]}%`).join(', ');
   const lines = [
     `${row.name} <${row.email}>${row.website ? ` (${row.website})` : ''}${row.personal ? ' [personal email]' : ''}`,
+    row.phone ? `Phone: ${row.phone}` : '',
     `Result: ${CHANNELS[r.top].name}. Top three: ${top3}.`,
     r.hot ? 'Hot: $2,500+ a month all in, and wants results within three months.' : '',
     r.flags.length ? `Flags: ${r.flags.map(f => FLAGS[f][0]).join('; ')}.` : '',
@@ -101,7 +102,7 @@ export async function notify(env, row, r, answers, fetchImpl = fetch) {
   }
   if (env.NOTIFY_WEBHOOK) {
     const payload = {
-      source: 'channel-quiz', id: row.id, url: urlFor(env, row.id), name: row.name, email: row.email, website: row.website,
+      source: 'channel-quiz', id: row.id, url: urlFor(env, row.id), name: row.name, email: row.email, phone: row.phone, website: row.website,
       personal: !!row.personal, marketing_consent: true, result: r.top, second: r.second, fit: r.fit, flags: r.flags, hot: r.hot, answers,
       utm: JSON.parse(row.utm || '{}'),
     };

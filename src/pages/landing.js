@@ -32,14 +32,14 @@ const FAQ = [
   ['How accurate is it?', 'It\'s a starting point built from your answers, not an audit. It doesn\'t look at your website, your competitors or your numbers. For that, book a free strategy call and we\'ll check the result against the real thing.'],
   ['Can I do more than one?', 'Yes, and you probably will as you grow. The quiz tells you where to start, so your first marketing dollars go where they\'re most likely to work.'],
   ['What if I\'m already running ads?', 'Take it anyway. If your result matches what you\'re doing, it\'s worth checking how well it\'s set up. If it doesn\'t match, that\'s worth a conversation.'],
-  ['What happens to my email address?', `We send your result to it. To get the result, you agree to receive marketing tips and offers from Navigator Multimedia by email. You can unsubscribe at any time. <a href="${PRIVACY}" target="_blank" rel="noopener">Read our privacy policy</a>.`],
+  ['What happens to my email address and phone number?', `We send your result to your email, and we may call you once to talk it through. To get the result, you agree to receive marketing tips and offers from Navigator Multimedia by email. You can unsubscribe at any time. <a href="${PRIVACY}" target="_blank" rel="noopener">Read our privacy policy</a>.`],
 ];
 
 // Only what the browser needs: question text, hints and option labels. Weights stay on the server.
 const PUBLIC_QUESTIONS = QUESTIONS.map((q, i) => ({ id: q.id, n: i + 1, q: q.q, hint: q.hint || '', only: q.only || null, options: q.options.map(o => ({ id: o.id, label: o.label })) }));
 
 export function landingPage({ error = '', values = {}, answers = null, preview = false } = {}) {
-  const state = { questions: PUBLIC_QUESTIONS, error, values: { name: values.name || '', email: values.email || '', website: values.website || '', consent: !!values.consent }, answers, preview };
+  const state = { questions: PUBLIC_QUESTIONS, error, values: { name: values.name || '', email: values.email || '', phone: values.phone || '', website: values.website || '', consent: !!values.consent }, answers, preview };
   const body = `
 <section class="hero-sub on-dark" id="quiz">
   <div class="hero-sub-bg" aria-hidden="true"><img src="${ASSET}hero-ship-wide.webp" alt="" width="2400" height="1029" fetchpriority="high"></div>
@@ -139,6 +139,7 @@ card.innerHTML='<div class="qtop"><button type="button" class="back">&larr; Back
 '<form method="post" action="/api/submit" novalidate>'+
 '<div class="field"><label for="cq-name">First name</label><input id="cq-name" name="name" autocomplete="given-name" required maxlength="80" value="'+esc(v.name)+'"></div>'+
 '<div class="field"><label for="cq-email">Work email</label><input id="cq-email" name="email" type="email" autocomplete="email" required maxlength="160" value="'+esc(v.email)+'"></div>'+
+'<div class="field"><label for="cq-phone">Phone</label><input id="cq-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required maxlength="30" value="'+esc(v.phone)+'"></div>'+
 '<div class="field"><label for="cq-web">Your website <span class="opt-l">(optional)</span></label><input id="cq-web" name="website" autocomplete="url" inputmode="url" maxlength="200" placeholder="example.com" value="'+esc(v.website)+'"></div>'+
 '<div class="hp" aria-hidden="true"><label for="cq-hp">Leave blank</label><input id="cq-hp" name="company_url" tabindex="-1" autocomplete="off"></div>'+
 '<input type="hidden" name="answers" value="'+esc(JSON.stringify(answers))+'"><input type="hidden" name="utm" value="'+esc(JSON.stringify(utm))+'"><input type="hidden" name="ref" value="'+esc(document.referrer.slice(0,300))+'"><input type="hidden" name="sid" value="'+esc(sid)+'">'+
@@ -148,12 +149,13 @@ card.innerHTML='<div class="qtop"><button type="button" class="back">&larr; Back
 card.querySelector('h3').focus({preventScroll:true});
 card.querySelector('.back').onclick=function(){refresh();idx=N-1;showQ()};
 var f=card.querySelector('form');f.onsubmit=function(e){var n=f.name.value.trim(),m=f.email.value.trim();
-var c=f.consent.checked;S.values={name:n,email:m,website:f.website.value,consent:c};
+var c=f.consent.checked,ph=f.phone.value.trim();S.values={name:n,email:m,phone:ph,website:f.website.value,consent:c};
 if(!n){e.preventDefault();gate('Please enter your first name.');return}
 if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(m)){e.preventDefault();gate('Please enter a valid email address.');return}
+if(ph.replace(/\\D/g,'').length<10){e.preventDefault();gate('Please enter a phone number with area code.');return}
 if(!c){e.preventDefault();gate('Please tick the box so we can email you your result.');return}
 ev('submit');var btn=f.querySelector('button[type=submit]');
-if(S.preview&&window.__CQ_PREVIEW_SUBMIT){e.preventDefault();window.__CQ_PREVIEW_SUBMIT({name:n,email:m,website:f.website.value},answers);return}
+if(S.preview&&window.__CQ_PREVIEW_SUBMIT){e.preventDefault();window.__CQ_PREVIEW_SUBMIT({name:n,email:m,phone:ph,website:f.website.value},answers);return}
 setTimeout(function(){btn.disabled=true;btn.textContent='Working out your result...'},0)}}
 Array.prototype.forEach.call(document.querySelectorAll('[data-start]'),function(b){b.addEventListener('click',function(e){e.preventDefault();start()})});
 if(S.answers&&Object.keys(S.answers).length){refresh();gate(S.error)}
