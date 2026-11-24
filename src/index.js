@@ -1,6 +1,7 @@
 import { score, cleanAnswers } from './quiz.js';
 import { landingPage } from './pages/landing.js';
 import { resultPage } from './pages/result.js';
+import { callPage, callResult } from './pages/call.js';
 import { notify } from './email.js';
 import { newId, cleanWebsite, cleanPhone, PERSONAL_DOMAINS, CONSENT_TEXT, CONSENT_VERSION } from './lib/util.js';
 import { pageViewPixel, leadPixel, withHead, freshCookie, clearFreshCookie, freshId } from './lib/pixel.js';
@@ -93,6 +94,13 @@ export default {
       if (p === '/' && request.method === 'GET') return landing({}, env);
       if (p === '/api/submit' && request.method === 'POST') return await submit(request, env, ctx, fetchImpl);
       if (p === '/api/e' && request.method === 'POST') return await event(request, env);
+      // Sales-call version: scores and returns the result. Stores nothing, sends nothing.
+      if ((p === '/call' || p === '/call/') && request.method === 'GET') return html(callPage(), 200, { 'x-robots-tag': 'noindex' });
+      if (p === '/api/score' && request.method === 'POST') {
+        let b; try { b = await request.json(); } catch { b = null; }
+        const answers = cleanAnswers(b && b.answers);
+        return answers ? json({ html: callResult(score(answers)) }) : json({ error: 'incomplete' }, 400);
+      }
       if (p === '/health') {
         let db = false;
         try { await env.DB.prepare('SELECT 1').first(); db = true; } catch { /* false */ }

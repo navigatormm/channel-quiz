@@ -94,3 +94,18 @@ test('health and robots', async () => {
   assert.equal(h.postmark, true);
   assert.match(await (await worker.fetch(new Request('https://x/robots.txt'), ENV())).text(), /Disallow: \/r\//);
 });
+
+test('call version: scores without storing, emailing or tracking', async () => {
+  const env = ENV(), sent = [];
+  const page = await (await worker.fetch(new Request('https://x/call'), env, null, fakeFetch(sent))).text();
+  assert.match(page, /Call Quiz/);
+  assert.ok(!page.includes('fbq(') && !page.includes('172577.js') && !page.includes('"w":'), 'no tracking, no weights');
+  const res = await worker.fetch(new Request('https://x/api/score', { method: 'POST', body: JSON.stringify({ answers }), headers: { 'content-type': 'application/json' } }), env, null, fakeFetch(sent));
+  const j = await res.json();
+  assert.match(j.html, /Start With Google Ads/);
+  assert.match(j.html, /hot lead/);
+  assert.equal((await worker.fetch(new Request('https://x/api/score', { method: 'POST', body: '{"answers":{"who":"biz"}}' }), env)).status, 400);
+  assert.equal(sent.length, 0);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM results').first()).n, 0);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM events').first()).n, 0);
+});

@@ -43,6 +43,10 @@ Tests cover nine personas, the hard rules, the conditional reviews question, eve
 
 Copy lives in `src/content.js` (result page) and `src/pages/landing.js`. Only the numbers are stored per result; the reasons are rebuilt from the stored answers on display, so copy edits apply to old results too.
 
+## Call version
+
+`/call` is the same quiz for the sales team to fill in during a call: every question on one screen, the recommendation beside it (fit bars, reasons, runner-up, what to hold, 90-day steps, trade-offs). It posts answers to `/api/score`, which scores and returns the result. Nothing is stored or emailed and the page carries no tracking scripts. It is unlisted (noindex) but not password protected.
+
 ## Form fields
 
 First name, work email and phone are required (phone needs 10 to 15 digits); website is optional. Phone was added 2026-11-24: `ALTER TABLE results ADD COLUMN phone TEXT;` (applied to the live database).
