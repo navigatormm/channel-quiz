@@ -61,7 +61,7 @@ WhatConverts script on every page (account 172577). Meta Pixel `1495860834011066
 ## Deploy
 
 1. Create the empty GitHub repo `navigatormm/channel-quiz` and push this folder to `main`.
-2. Create the D1 database: `npx wrangler d1 create channel-quiz`. Put the id in `wrangler.toml` (`REPLACE_WITH_D1_ID`), then `npx wrangler d1 execute channel-quiz --remote --file=schema.sql`.
+2. Create the D1 database: `npx wrangler d1 create channel-quiz`. (Done 2026-11-24: id is in `wrangler.toml`.) Schema: `npx wrangler d1 execute channel-quiz --remote --file=schema.sql`.
 3. Workers & Pages > Create > Import a repository: `navigatormm/channel-quiz`, branch `main`, root `/`, build command blank, deploy command `npx wrangler deploy`.
 4. Secrets (Worker > Settings > Variables and Secrets): `POSTMARK_TOKEN` (same server token as redesign-risk-audit), `ADMIN_TOKEN` (any long random string). `NOTIFY_WEBHOOK` optional.
 5. Custom domain: Worker > Settings > Domains & Routes > Add > Custom domain > `channel.navigator.ca`.

@@ -20,7 +20,7 @@ META_PIXEL_ID = "1495860834011066"
 [[d1_databases]]
 binding = "DB"
 database_name = "channel-quiz"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "afbb97ca-d481-4d77-8b8f-b5f8bf782bf9"
 
 [observability]
 enabled = true
